@@ -67,7 +67,8 @@ export async function onRequestGet({request, env}) {
     const r=await fetch(url,{headers:{Authorization:`Bearer ${env.SUPABASE_SECRET_KEY}`,apikey:env.SUPABASE_SECRET_KEY}});
     if(!r.ok) return Response.json({error:"File fetch failed"},{status:r.status});
     const headers=new Headers(r.headers);
-    headers.set("content-disposition",`inline; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+    const download=new URL(request.url).searchParams.get("download")==="1";
+    headers.set("content-disposition",`${download?"attachment":"inline"}; filename*=UTF-8''${encodeURIComponent(fileName)}`);
     headers.set("cache-control","private, max-age=60");
     return new Response(r.body,{status:200,headers});
   }catch(e){
