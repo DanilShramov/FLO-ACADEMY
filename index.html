@@ -46,11 +46,11 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
     <div id="adminSearchResults" class="list hidden"></div>
     <div class="grid">
       <button id="openEmployeesBtn" class="tile tileButton"><b id="countEmployees">0</b><span>Сотрудники →</span></button>
-      <button id="openMaterialsBtn" class="tile tileButton"><b id="countSections">0</b><span>Материалы →</span></button>
+      <button id="openMaterialsBtn" class="tile tileButton"><b id="countMaterials">0</b><span>Материалы →</span></button>
       <button id="openTestsBtn" class="tile tileButton"><b>Тесты</b><span>Следующий этап →</span></button>
     </div>
     <div class="adminBottom">
-      <button id="openArchiveBtn" class="tile tileButton archiveTile" style="margin-bottom:18px"><b>Архив</b><span>Только для администратора →</span></button>
+      <button id="openArchiveBtn" class="tile tileButton archiveTile" style="margin-bottom:18px"><b><span id="countArchive">0</span> · Архив</b><span>Хранить, восстановить или удалить материалы →</span></button>
       <div class="updatedLine">Материалы обновлены: <b id="materialsUpdatedAt">—</b></div>
       <div class="adminBottomTitle">Структура и резервная копия</div>
       <div class="adminBottomActions">
@@ -251,6 +251,18 @@ async function ensureArchiveFolder(sections=null){
   await setDoc(doc(db,"materialSections",id),{isArchive:true,allowedPositions:[]},{merge:true});
   return {id,name:ARCHIVE_NAME,parentId:null,depth:1,order:Number.MAX_SAFE_INTEGER,isArchive:true,allowedPositions:[]};
 }
+async function loadMaterialCounters(){
+  try{
+    const items=await readMaterials();
+    const active=items.filter(x=>x.archived!==true).length;
+    const archived=items.filter(x=>x.archived===true).length;
+    if($("countMaterials"))$("countMaterials").textContent=active;
+    if($("countArchive"))$("countArchive").textContent=archived;
+  }catch{
+    if($("countMaterials"))$("countMaterials").textContent="0";
+    if($("countArchive"))$("countArchive").textContent="0";
+  }
+}
 async function loadMaterialsUpdatedAt(){
   try{
     const items=await readMaterials();
@@ -336,7 +348,7 @@ async function moveMaterial(materialId,direction,items){
     setDoc(doc(db,"materialItems",item.id),{order:b,updatedAt:serverTimestamp()},{merge:true}),
     setDoc(doc(db,"materialItems",other.id),{order:a,updatedAt:serverTimestamp()},{merge:true})
   ]);
-  await loadSections();await loadMaterialsUpdatedAt();
+  await loadSections();await loadMaterialsUpdatedAt();await loadMaterialCounters();
 }
 function searchHaystackFolder(s){return `${s.name||""}`.toLocaleLowerCase("ru")}
 function searchHaystackMaterial(m){return `${m.name||""} ${m.fileName||""} ${(Array.isArray(m.keywords)?m.keywords.join(" "):"")} ${m.searchText||m.extractedText||""}`.toLocaleLowerCase("ru")}
@@ -358,13 +370,59 @@ async function openMaterialSecure(materialId){
       throw new Error(j.error||`HTTP ${r.status}`);
     }
     const blob=await r.blob();
-    const url=URL.createObjectURL(blob);
-    if(tab) tab.location.href=url;
-    else window.location.href=url;
-    setTimeout(()=>URL.revokeObjectURL(url),120000);
+    const type=(blob.type||"").toLowerCase();
+    if(type.includes("pdf")||type.startsWith("image/")){
+      const url=URL.createObjectURL(blob);
+      if(tab){
+        const doc=tab.document;
+        doc.open();
+        doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>FLO Academy</title><style>
+          html,body{margin:0;height:100%;background:#111;overflow:hidden}
+          body{-webkit-user-select:none;user-select:none}
+          iframe,img{width:100%;height:100%;border:0;object-fit:contain}
+        </style></head><body oncontextmenu="return false" oncopy="return false" oncut="return false" onselectstart="return false"></body></html>`);
+        doc.close();
+        if(type.includes("pdf")){
+          const iframe=doc.createElement("iframe");
+          iframe.src=url+"#toolbar=0&navpanes=0&scrollbar=1";
+          iframe.setAttribute("sandbox","allow-same-origin");
+          doc.body.appendChild(iframe);
+        }else{
+          const img=doc.createElement("img");
+          img.src=url;img.draggable=false;
+          doc.body.appendChild(img);
+        }
+      }else{
+        window.location.href=url;
+      }
+      setTimeout(()=>URL.revokeObjectURL(url),120000);
+    }else{
+      throw new Error("Просмотр этого формата без скачивания пока не поддерживается.");
+    }
   }catch(e){
     if(tab&&!tab.closed)tab.close();
     alert("Не удалось открыть материал: "+(e?.message||"ошибка"));
+  }
+}
+
+async function downloadMaterialAdmin(materialId){
+  try{
+    const token=await auth.currentUser.getIdToken();
+    const r=await fetch(`/api/material-file?id=${encodeURIComponent(materialId)}&download=1`,{headers:{Authorization:`Bearer ${token}`}});
+    if(!r.ok){
+      let j={};try{j=await r.json()}catch{}
+      throw new Error(j.error||`HTTP ${r.status}`);
+    }
+    const blob=await r.blob();
+    const cd=r.headers.get("content-disposition")||"";
+    let fileName="material";
+    const m=cd.match(/filename\*=UTF-8''([^;]+)/i);
+    if(m) fileName=decodeURIComponent(m[1]);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){
+    alert("Не удалось скачать материал: "+(e?.message||"ошибка"));
   }
 }
 
@@ -376,15 +434,15 @@ async function runAdminGlobalSearch(){
     const [sections,items]=await Promise.all([readSections(),readMaterials()]);
     const folderHits=sections.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(q));
     const materialHits=items.filter(m=>!m.archived&&searchHaystackMaterial(m).includes(q));
-    const folderHtml=folderHits.map(s=>`<button class="tile tileButton adminSearchFolder" data-id="${s.id}" style="margin-bottom:8px"><b>${escapeHtml(s.name||"Папка")} →</b><span>${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</span></button>`).join("");
-    const materialHtml=materialHits.map(m=>`<button class="tile tileButton adminSearchMaterial" data-folder="${escapeHtml(m.folderId||"")}" data-url="${escapeHtml(m.url||"")}" style="margin-bottom:8px"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${escapeHtml(materialPath(sections,m))}</span></button>`).join("");
+    const folderHtml=folderHits.map(s=>`<button class="tile tileButton adminSearchFolder" data-id="${s.id}" style="margin-bottom:8px"><b>${escapeHtml(s.name||"Папка")} →</b><span>Папка · ${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</span></button>`).join("");
+    const materialHtml=materialHits.map(m=>`<button class="tile tileButton adminSearchMaterial" data-id="${m.id}" data-folder="${escapeHtml(m.folderId||"")}" style="margin-bottom:8px"><b>${escapeHtml(m.name||m.fileName||"Материал")} →</b><span>Материал · ${escapeHtml(materialPath(sections,m))}</span></button>`).join("");
     results.innerHTML=(folderHtml+materialHtml)||`<div class="notice">Ничего не найдено.</div>`;
     results.classList.remove("hidden");
     results.querySelectorAll(".adminSearchFolder").forEach(b=>b.onclick=async()=>{
       currentFolderId=b.dataset.id;show("materialsView");$("adminMaterialSearch").value="";await loadSections();
     });
     results.querySelectorAll(".adminSearchMaterial").forEach(b=>b.onclick=async()=>{
-      if(b.dataset.url){window.open(b.dataset.url,"_blank");return}
+      if(b.dataset.id){await openMaterialSecure(b.dataset.id);return}
       currentFolderId=b.dataset.folder||null;show("materialsView");$("adminMaterialSearch").value="";await loadSections();
     });
   }catch(e){
@@ -426,6 +484,7 @@ async function uploadSelectedMaterial(e){
     msg($("materialUploadMsg"),"Материал добавлен.","ok");
     await loadSections();
     await loadMaterialsUpdatedAt();
+    await loadMaterialCounters();
   }catch(err){
     msg($("materialUploadMsg"),"Ошибка загрузки: "+(err?.message||"неизвестная ошибка"));
   }finally{
@@ -451,7 +510,7 @@ async function loadSections(createDefaults=false){
       children=refreshed.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(query));
       visibleMaterials=allMaterials.filter(m=>m.archived!==true&&searchHaystackMaterial(m).includes(query));
     }
-    $("countSections").textContent=roots.filter(s=>!s.isArchive).length;
+    
     renderAdminBreadcrumb(refreshed);
     $("createFolderTitle").textContent=archiveMode?"Архив":(currentFolderId?"Создать папку":"Создать раздел");
     $("createFolderSub").textContent="";
@@ -467,7 +526,7 @@ async function loadSections(createDefaults=false){
       const kids=getChildren(refreshed,s.id).filter(x=>!x.isArchive);
       const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");
       const access=allowedPositions(s);const accessText=access.length?access.join(", "):"Все должности";
-      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
+      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
     document.querySelectorAll(".folderOpen").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id;$("adminMaterialSearch").value="";msg($("sectionMsg"),"");await loadSections()});
     document.querySelectorAll(".accessSection").forEach(b=>b.onclick=()=>{const item=getFolderById(refreshed,b.dataset.id);if(item)openAccessModal(item)});
     document.querySelectorAll(".renameSection").forEach(button=>button.onclick=async()=>{
@@ -482,8 +541,9 @@ async function loadSections(createDefaults=false){
       try{button.disabled=true;await deleteDoc(doc(db,"materialSections",item.id));msg($("sectionMsg"),"Папка удалена.","ok");await loadSections()}catch(e){button.disabled=false;msg($("sectionMsg"),friendly(e))}
     });
 
-    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div style="flex:1"><button class="folderOpen openMaterial" data-id="${m.id}" style="width:100%;text-align:left"><div class="name">${escapeHtml(m.name||m.fileName||"Материал")} →</div></button>${query?`<div class="searchResultPath">${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions">${archiveMode?"":`<button class="secondary small archiveMaterial" data-id="${m.id}">В архив</button>`}<button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
+    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div style="flex:1"><button class="folderOpen openMaterial" data-id="${m.id}" style="width:100%;text-align:left"><div class="name">${escapeHtml(m.name||m.fileName||"Материал")} →</div></button>${query?`<div class="searchResultPath">Материал · ${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions"><button class="secondary small downloadMaterial" data-id="${m.id}">Скачать</button>${archiveMode?`<button class="secondary small restoreMaterial" data-id="${m.id}">Восстановить</button>`:`<button class="secondary small archiveMaterial" data-id="${m.id}">В архив</button>`}<button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
     document.querySelectorAll(".openMaterial").forEach(b=>b.onclick=()=>openMaterialSecure(b.dataset.id));
+    document.querySelectorAll(".downloadMaterial").forEach(b=>b.onclick=()=>downloadMaterialAdmin(b.dataset.id));
     document.querySelectorAll(".archiveMaterial").forEach(b=>b.onclick=async()=>{
       const m=allMaterials.find(x=>x.id===b.dataset.id);if(!m)return;
       if(!confirm(`Переместить материал «${m.name||m.fileName||"Материал"}» в архив?`))return;
@@ -497,6 +557,24 @@ async function loadSections(createDefaults=false){
         msg($("sectionMsg"),"Материал перемещён в архив.","ok");
         await loadSections();
         await loadMaterialsUpdatedAt();
+        await loadMaterialCounters();
+      }catch(e){msg($("sectionMsg"),friendly(e))}
+    });
+    document.querySelectorAll(".restoreMaterial").forEach(b=>b.onclick=async()=>{
+      const m=allMaterials.find(x=>x.id===b.dataset.id);if(!m)return;
+      try{
+        let restoreFolderId=m.previousFolderId||null;
+        if(restoreFolderId && !getFolderById(refreshed,restoreFolderId)) restoreFolderId=null;
+        await setDoc(doc(db,"materialItems",m.id),{
+          archived:false,
+          archivedAt:null,
+          folderId:restoreFolderId,
+          updatedAt:serverTimestamp()
+        },{merge:true});
+        msg($("sectionMsg"),"Материал восстановлен.","ok");
+        await loadSections();
+        await loadMaterialsUpdatedAt();
+        await loadMaterialCounters();
       }catch(e){msg($("sectionMsg"),friendly(e))}
     });
     document.querySelectorAll(".deleteMaterial").forEach(b=>b.onclick=async()=>{
@@ -509,7 +587,7 @@ async function loadSections(createDefaults=false){
         if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);
         await deleteDoc(doc(db,"materialItems",m.id));
         msg($("sectionMsg"),"Материал удалён.","ok");
-        await loadSections();await loadMaterialsUpdatedAt();
+        await loadSections();await loadMaterialsUpdatedAt();await loadMaterialCounters();
       }catch(e){msg($("sectionMsg"),"Ошибка удаления: "+(e?.message||"неизвестная ошибка"))}
     });
     return refreshed;
@@ -528,8 +606,8 @@ async function loadEmployeeSections(){
       materials=items.filter(m=>!m.archived&&searchHaystackMaterial(m).includes(query));
     }
     renderEmployeeBreadcrumb(sections);
-    const folderHtml=folders.map(s=>{const kids=getChildren(sections,s.id).filter(k=>folderAllowedForPosition(k,currentEmployeePosition));const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("");return `<button class="tile tileButton employeeFolder" data-id="${s.id}"><b>${escapeHtml(s.name||"Раздел")} →</b>${preview?`<div class="miniTree">${preview}</div>`:`<span>Открыть</span>`}${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</div>`:""}</button>`}).join("");
-    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-id="${m.id}"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${query?escapeHtml(materialPath(sections,m)):"Открыть материал"}</span></button>`).join("");
+    const folderHtml=folders.map(s=>{const kids=getChildren(sections,s.id).filter(k=>folderAllowedForPosition(k,currentEmployeePosition));const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("");return `<button class="tile tileButton employeeFolder" data-id="${s.id}"><b>${escapeHtml(s.name||"Раздел")} →</b>${preview?`<div class="miniTree">${preview}</div>`:`<span>Открыть</span>`}${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</div>`:""}</button>`}).join("");
+    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-id="${m.id}"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${query?`Материал · ${escapeHtml(materialPath(sections,m))}`:"Открыть материал"}</span></button>`).join("");
     $("employeeSections").innerHTML=(folderHtml+materialHtml)||`<div class="notice" style="grid-column:1/-1">${query?"Ничего не найдено.":"В этой папке пока ничего нет."}</div>`;
     document.querySelectorAll(".employeeFolder").forEach(b=>b.onclick=async()=>{employeeFolderId=b.dataset.id;$("employeeMaterialSearch").value="";await loadEmployeeSections()});
     document.querySelectorAll(".employeeMaterial").forEach(b=>b.onclick=()=>openMaterialSecure(b.dataset.id));
@@ -574,7 +652,7 @@ async function importStructureFromFile(e){
     for(const m of (data.materials||[])){
       await setDoc(doc(db,"materialItems",m.id),{name:m.name||"",folderId:m.folderId||null,order:m.order??999,fileName:m.fileName||"",keywords:Array.isArray(m.keywords)?m.keywords:[],url:m.url||"",searchText:m.searchText||"",archived:!!m.archived,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
     }
-    currentFolderId=null;msg($("toolsMsg"),"Структура импортирована.","ok");await loadSections();await loadMaterialsUpdatedAt();
+    currentFolderId=null;msg($("toolsMsg"),"Структура импортирована.","ok");await loadSections();await loadMaterialsUpdatedAt();await loadMaterialCounters();
   }catch(err){msg($("toolsMsg"),"Ошибка импорта: "+(err?.message||"неизвестная ошибка"))}
 }
 async function createBackup(){
@@ -607,7 +685,7 @@ onAuthStateChanged(auth,async user=>{
   try{
     const admin=await isAdmin(user.uid);
     if(admin){
-      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();await loadMaterialsUpdatedAt();
+      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();await loadMaterialsUpdatedAt();await loadMaterialCounters();
       try{const sections=await readSections();$("countSections").textContent=getChildren(sections,null).length}catch(e){$("countSections").textContent="—"}
     }
     else{const p=await getDoc(doc(db,"users",user.uid));currentEmployeePosition=p.exists()?(p.data().position||""):"";$("employeeHello").textContent=p.exists()?`${p.data().name||user.email} · ${currentEmployeePosition}`:(user.email||"");employeeFolderId=null;show("employeeView");await loadEmployeeSections()}
