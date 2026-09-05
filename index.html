@@ -175,7 +175,21 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":
 function normalizedParent(s){return s.parentId||null}
 function normalizedDepth(s){return Number(s.depth)||1}
 function allowedPositions(s){return Array.isArray(s.allowedPositions)?s.allowedPositions:[]}
-function folderAllowedForPosition(s,position){if(s?.isArchive)return false;const a=allowedPositions(s);return !a.length||a.includes(position)}
+function folderAllowedForPosition(s,position){if(s?.isArchive||s?.archived===true)return false;const a=allowedPositions(s);return !a.length||a.includes(position)}
+function isFolderArchived(sections,folder){
+  if(!folder)return false;
+  if(folder.archived===true)return true;
+  let parentId=normalizedParent(folder);
+  const seen=new Set();
+  while(parentId&&!seen.has(parentId)){
+    seen.add(parentId);
+    const p=getFolderById(sections,parentId);
+    if(!p)break;
+    if(p.archived===true||p.isArchive===true)return true;
+    parentId=normalizedParent(p);
+  }
+  return false;
+}
 function formatDate(v){
   try{
     const d=v?.toDate?v.toDate():(v instanceof Date?v:(v?new Date(v):null));
@@ -297,9 +311,25 @@ function getFolderPath(sections,id){
 }
 
 function renderAdminBreadcrumb(sections){
-  const path=getFolderPath(sections,currentFolderId);
-  $("sectionBreadcrumb").innerHTML=`<button class="crumb ${!currentFolderId?"crumbCurrent":""}" data-folder="">Материалы</button>`+path.map((p,i)=>`<span>›</span><button class="crumb ${i===path.length-1?"crumbCurrent":""}" data-folder="${p.id}">${escapeHtml(p.name||"Папка")}</button>`).join("");
-  $("sectionBreadcrumb").querySelectorAll(".crumb").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.folder||null;await loadSections()});
+  const current=getFolderById(sections,currentFolderId);
+  const archive=sections.find(s=>s.isArchive===true);
+  if(current?.archived){
+    const path=[];
+    let node=current;
+    const seen=new Set();
+    while(node&&!seen.has(node.id)){
+      seen.add(node.id);path.unshift(node);
+      const pid=normalizedParent(node);
+      const p=pid?getFolderById(sections,pid):null;
+      if(!p||!p.archived)break;
+      node=p;
+    }
+    $("sectionBreadcrumb").innerHTML=`<button class="crumb" data-id="">Материалы</button><span>›</span><button class="crumb" data-id="${archive?.id||""}">Архив</button>${path.map((x,i)=>`<span>›</span><button class="crumb ${i===path.length-1?"crumbCurrent":""}" data-id="${x.id}">${escapeHtml(x.name||"Папка")}</button>`).join("")}`;
+  }else{
+    const path=getFolderPath(sections,currentFolderId);
+    $("sectionBreadcrumb").innerHTML=`<button class="crumb ${!currentFolderId?"crumbCurrent":""}" data-id="">Материалы</button>${path.map((x,i)=>`<span>›</span><button class="crumb ${i===path.length-1?"crumbCurrent":""}" data-id="${x.id}">${escapeHtml(x.name||"Папка")}</button>`).join("")}`;
+  }
+  $("sectionBreadcrumb").querySelectorAll(".crumb").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id||null;await loadSections()});
 }
 
 function renderEmployeeBreadcrumb(sections){
@@ -383,10 +413,13 @@ async function openMaterialSecure(materialId){
         </style></head><body oncontextmenu="return false" oncopy="return false" oncut="return false" onselectstart="return false"></body></html>`);
         doc.close();
         if(type.includes("pdf")){
-          const iframe=doc.createElement("iframe");
-          iframe.src=url+"#toolbar=0&navpanes=0&scrollbar=1";
-          iframe.setAttribute("sandbox","allow-same-origin");
-          doc.body.appendChild(iframe);
+          const embed=doc.createElement("embed");
+          embed.src=url+"#toolbar=0&navpanes=0&scrollbar=1";
+          embed.type="application/pdf";
+          embed.style.width="100%";
+          embed.style.height="100%";
+          embed.style.border="0";
+          doc.body.appendChild(embed);
         }else{
           const img=doc.createElement("img");
           img.src=url;img.draggable=false;
@@ -432,7 +465,7 @@ async function runAdminGlobalSearch(){
   if(!q){results.innerHTML="";results.classList.add("hidden");return}
   try{
     const [sections,items]=await Promise.all([readSections(),readMaterials()]);
-    const folderHits=sections.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(q));
+    const folderHits=sections.filter(s=>!s.isArchive&&!isFolderArchived(sections,s)&&searchHaystackFolder(s).includes(q));
     const materialHits=items.filter(m=>!m.archived&&searchHaystackMaterial(m).includes(q));
     const folderHtml=folderHits.map(s=>`<button class="tile tileButton adminSearchFolder" data-id="${s.id}" style="margin-bottom:8px"><b>${escapeHtml(s.name||"Папка")} →</b><span>Папка · ${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</span></button>`).join("");
     const materialHtml=materialHits.map(m=>`<button class="tile tileButton adminSearchMaterial" data-id="${m.id}" data-folder="${escapeHtml(m.folderId||"")}" style="margin-bottom:8px"><b>${escapeHtml(m.name||m.fileName||"Материал")} →</b><span>Материал · ${escapeHtml(materialPath(sections,m))}</span></button>`).join("");
@@ -499,15 +532,21 @@ async function loadSections(createDefaults=false){
     const refreshed=await readSections();
     if(currentFolderId&&!getFolderById(refreshed,currentFolderId))currentFolderId=null;
     const current=getFolderById(refreshed,currentFolderId);const currentDepth=current?normalizedDepth(current):0;
-    const archiveMode=!!current?.isArchive;
-    let children=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive);
-    const roots=getChildren(refreshed,null).filter(s=>!s.isArchive);
+    const archiveMode=!!current?.isArchive||!!current?.archived;
+    let children=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive&&!isFolderArchived(refreshed,s));
+    const roots=getChildren(refreshed,null).filter(s=>!s.isArchive&&!isFolderArchived(refreshed,s));
     const query=$("adminMaterialSearch").value.trim().toLocaleLowerCase("ru");
     const allMaterials=await readMaterials();
     let visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===(currentFolderId||null)&&m.archived!==true);
-    if(archiveMode)visibleMaterials=allMaterials.filter(m=>m.archived===true);
+    if(current?.isArchive){
+      visibleMaterials=allMaterials.filter(m=>m.archived===true);
+      children=refreshed.filter(s=>s.archived===true&&!s.isArchive);
+    }else if(current?.archived){
+      visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===currentFolderId);
+      children=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive);
+    }
     if(query){
-      children=refreshed.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(query));
+      children=refreshed.filter(s=>!s.isArchive&&!isFolderArchived(refreshed,s)&&searchHaystackFolder(s).includes(query));
       visibleMaterials=allMaterials.filter(m=>m.archived!==true&&searchHaystackMaterial(m).includes(query));
     }
     
@@ -526,9 +565,43 @@ async function loadSections(createDefaults=false){
       const kids=getChildren(refreshed,s.id).filter(x=>!x.isArchive);
       const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");
       const access=allowedPositions(s);const accessText=access.length?access.join(", "):"Все должности";
-      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
+      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions">${archiveMode?`<button class="secondary small restoreSection" data-id="${s.id}">Восстановить</button>`:`<button class="secondary small archiveSection" data-id="${s.id}">В архив</button><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button>`}<button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
     document.querySelectorAll(".folderOpen").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id;$("adminMaterialSearch").value="";msg($("sectionMsg"),"");await loadSections()});
     document.querySelectorAll(".accessSection").forEach(b=>b.onclick=()=>{const item=getFolderById(refreshed,b.dataset.id);if(item)openAccessModal(item)});
+    document.querySelectorAll(".archiveSection").forEach(b=>b.onclick=async()=>{
+      const item=getFolderById(refreshed,b.dataset.id);if(!item)return;
+      if(!confirm(`Переместить папку «${item.name||"Папка"}» в архив вместе со всем её содержимым?`))return;
+      try{
+        await setDoc(doc(db,"materialSections",item.id),{
+          archived:true,
+          archivedAt:serverTimestamp(),
+          previousParentId:normalizedParent(item),
+          updatedAt:serverTimestamp()
+        },{merge:true});
+        msg($("sectionMsg"),"Папка перемещена в архив.","ok");
+        await loadSections();
+      }catch(e){msg($("sectionMsg"),friendly(e))}
+    });
+    document.querySelectorAll(".restoreSection").forEach(b=>b.onclick=async()=>{
+      const item=getFolderById(refreshed,b.dataset.id);if(!item)return;
+      try{
+        let restoreParentId=item.previousParentId||null;
+        if(restoreParentId){
+          const parent=getFolderById(refreshed,restoreParentId);
+          if(!parent||isFolderArchived(refreshed,parent))restoreParentId=null;
+        }
+        const parentDepth=restoreParentId?normalizedDepth(getFolderById(refreshed,restoreParentId)):0;
+        await setDoc(doc(db,"materialSections",item.id),{
+          archived:false,
+          archivedAt:null,
+          parentId:restoreParentId,
+          depth:parentDepth+1,
+          updatedAt:serverTimestamp()
+        },{merge:true});
+        msg($("sectionMsg"),"Папка восстановлена.","ok");
+        await loadSections();
+      }catch(e){msg($("sectionMsg"),friendly(e))}
+    });
     document.querySelectorAll(".renameSection").forEach(button=>button.onclick=async()=>{
       const item=getFolderById(refreshed,button.dataset.id);if(!item)return;const next=prompt("Новое название папки:",item.name||"");if(next===null)return;const name=next.trim();if(!name)return;
       const siblings=getChildren(refreshed,normalizedParent(item));if(siblings.some(s=>s.id!==item.id&&(s.name||"").trim().toLocaleLowerCase("ru")===name.toLocaleLowerCase("ru"))){msg($("sectionMsg"),"На этом уровне уже есть папка с таким названием.");return}
@@ -599,10 +672,10 @@ async function loadEmployeeSections(){
     const sections=await readSections();if(employeeFolderId&&!getFolderById(sections,employeeFolderId))employeeFolderId=null;
     const query=$("employeeMaterialSearch").value.trim().toLocaleLowerCase("ru");
     const items=await readMaterials();
-    let folders=(query?sections:getChildren(sections,employeeFolderId)).filter(s=>folderAllowedForPosition(s,currentEmployeePosition));
+    let folders=(query?sections:getChildren(sections,employeeFolderId)).filter(s=>folderAllowedForPosition(s,currentEmployeePosition)&&!isFolderArchived(sections,s));
     let materials=items.filter(m=>(m.folderId||null)===(employeeFolderId||null)&&!m.archived);
     if(query){
-      folders=sections.filter(s=>folderAllowedForPosition(s,currentEmployeePosition)&&searchHaystackFolder(s).includes(query));
+      folders=sections.filter(s=>folderAllowedForPosition(s,currentEmployeePosition)&&!isFolderArchived(sections,s)&&searchHaystackFolder(s).includes(query));
       materials=items.filter(m=>!m.archived&&searchHaystackMaterial(m).includes(query));
     }
     renderEmployeeBreadcrumb(sections);
