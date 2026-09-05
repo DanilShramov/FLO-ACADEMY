@@ -53,8 +53,12 @@ export async function onRequestPost({request, env}) {
     if(!folderId) return Response.json({error:"folderId required"},{status:400});
     if(file.size>50*1024*1024) return Response.json({error:"File too large"},{status:400});
     const id=crypto.randomUUID();
-    const safeName=file.name.replace(/[^\p{L}\p{N}._ -]+/gu,"_");
-    const storagePath=`${folderId}/${id}-${safeName}`;
+    const rawExt=(file.name.split(".").pop()||"").toLowerCase();
+    const allowedExt=new Set(["pdf","doc","docx","xls","xlsx","jpg","jpeg","png","webp"]);
+    const ext=allowedExt.has(rawExt)?rawExt:"bin";
+    // В Supabase используем только безопасное ASCII-имя объекта.
+    // Оригинальное русское имя файла сохраняется отдельно в Firestore и показывается пользователю.
+    const storagePath=`${folderId}/${id}.${ext}`;
     const url=`${env.SUPABASE_URL}/storage/v1/object/${env.SUPABASE_BUCKET}/${storagePath.split("/").map(encodeURIComponent).join("/")}`;
     const r=await fetch(url,{method:"POST",headers:{Authorization:`Bearer ${env.SUPABASE_SECRET_KEY}`,apikey:env.SUPABASE_SECRET_KEY,"content-type":file.type||"application/octet-stream","x-upsert":"false"},body:await file.arrayBuffer()});
     if(!r.ok) return Response.json({error:`Storage upload failed: ${await r.text()}`},{status:502});
