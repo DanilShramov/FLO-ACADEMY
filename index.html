@@ -207,7 +207,54 @@ function safeExportMaterial(m){return {id:m.id,name:m.name||"",folderId:m.folder
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();msg($("loginMsg"),"");try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value)}catch(err){msg($("loginMsg"),friendly(err))}});
 $("logoutBtn").onclick=()=>signOut(auth);$("employeesLogoutBtn").onclick=()=>signOut(auth);$("materialsLogoutBtn").onclick=()=>signOut(auth);$("employeeLogoutBtn").onclick=()=>signOut(auth);
 if($("addBtn"))$("addBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("addEmployeeFromListBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("closeModal").onclick=()=>$("modal").classList.add("hidden");
-$("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");$("backToAdminBtn").onclick=()=>{currentFolderId=null;show("adminView")};$("materialsHomeBtn").onclick=()=>{currentFolderId=null;show("adminView")};
+$("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");
+$("backToAdminBtn").onclick=async()=>{
+  try{
+    if(!currentFolderId){
+      show("adminView");
+      return;
+    }
+    const sections=await readSections();
+    const current=getFolderById(sections,currentFolderId);
+
+    // Если мы в корне Архива — назад на главную.
+    if(current?.isArchive){
+      currentFolderId=null;
+      show("adminView");
+      return;
+    }
+
+    // Если внутри архивной папки — назад к архивной родительской,
+    // а если архивного родителя нет — к корню Архива.
+    if(current?.archived){
+      const parentId=normalizedParent(current);
+      const parent=parentId?getFolderById(sections,parentId):null;
+      if(parent?.archived){
+        currentFolderId=parent.id;
+      }else{
+        const archive=sections.find(s=>s.isArchive===true);
+        currentFolderId=archive?.id||null;
+      }
+      await loadSections();
+      return;
+    }
+
+    // Обычная папка — подняться на один уровень.
+    const parentId=normalizedParent(current);
+    if(parentId){
+      currentFolderId=parentId;
+      await loadSections();
+    }else{
+      // Мы были в корневом разделе Материалов — возвращаемся к списку разделов.
+      currentFolderId=null;
+      await loadSections();
+    }
+  }catch(e){
+    currentFolderId=null;
+    show("adminView");
+  }
+};
+$("materialsHomeBtn").onclick=()=>{currentFolderId=null;show("adminView")};
 $("openEmployeesBtn").onclick=async()=>{show("employeesView");await loadEmployees()};
 $("openMaterialsBtn").onclick=async()=>{currentFolderId=null;show("materialsView");await loadSections(true)};
 $("openTestsBtn").onclick=()=>alert("Раздел тестов добавим следующим этапом.");
