@@ -80,7 +80,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
   <section id="materialsView" class="card hidden">
     <div class="top">
       <div><div class="brand" style="text-align:left"><div class="logo" style="font-size:31px;margin:0;letter-spacing:6px">FLO <span style="font-size:1em;letter-spacing:6px">ACADEMY</span></div></div><h1 style="margin-top:18px">Материалы</h1><div class="sub"></div></div>
-      <div class="actions"><button id="backToAdminBtn" class="secondary">← Назад</button><button id="materialsLogoutBtn" class="secondary">Выйти</button></div>
+      <div class="actions"><button id="backToAdminBtn" class="secondary">← Назад</button><button id="materialsHomeBtn" class="secondary">На главную</button><button id="materialsLogoutBtn" class="secondary">Выйти</button></div>
     </div>
     <div class="rule"></div>
     <div class="searchBox"><input id="adminMaterialSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
@@ -193,7 +193,7 @@ function safeExportMaterial(m){return {id:m.id,name:m.name||"",folderId:m.folder
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();msg($("loginMsg"),"");try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value)}catch(err){msg($("loginMsg"),friendly(err))}});
 $("logoutBtn").onclick=()=>signOut(auth);$("employeesLogoutBtn").onclick=()=>signOut(auth);$("materialsLogoutBtn").onclick=()=>signOut(auth);$("employeeLogoutBtn").onclick=()=>signOut(auth);
 if($("addBtn"))$("addBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("addEmployeeFromListBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("closeModal").onclick=()=>$("modal").classList.add("hidden");
-$("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");$("backToAdminBtn").onclick=()=>{currentFolderId=null;show("adminView")};
+$("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");$("backToAdminBtn").onclick=()=>{currentFolderId=null;show("adminView")};$("materialsHomeBtn").onclick=()=>{currentFolderId=null;show("adminView")};
 $("openEmployeesBtn").onclick=async()=>{show("employeesView");await loadEmployees()};
 $("openMaterialsBtn").onclick=async()=>{currentFolderId=null;show("materialsView");await loadSections(true)};
 $("openTestsBtn").onclick=()=>alert("Раздел тестов добавим следующим этапом.");
@@ -438,11 +438,11 @@ async function loadSections(createDefaults=false){
     const roots=getChildren(refreshed,null).filter(s=>!s.isArchive);
     const query=$("adminMaterialSearch").value.trim().toLocaleLowerCase("ru");
     const allMaterials=await readMaterials();
-    let visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===(currentFolderId||null));
-    if(archiveMode)visibleMaterials=allMaterials.filter(m=>m.archived===true||(m.folderId||null)===currentFolderId);
+    let visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===(currentFolderId||null)&&m.archived!==true);
+    if(archiveMode)visibleMaterials=allMaterials.filter(m=>m.archived===true);
     if(query){
       children=refreshed.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(query));
-      visibleMaterials=allMaterials.filter(m=>searchHaystackMaterial(m).includes(query));
+      visibleMaterials=allMaterials.filter(m=>m.archived!==true&&searchHaystackMaterial(m).includes(query));
     }
     $("countSections").textContent=roots.length;
     renderAdminBreadcrumb(refreshed);
@@ -475,8 +475,23 @@ async function loadSections(createDefaults=false){
       try{button.disabled=true;await deleteDoc(doc(db,"materialSections",item.id));msg($("sectionMsg"),"Папка удалена.","ok");await loadSections()}catch(e){button.disabled=false;msg($("sectionMsg"),friendly(e))}
     });
 
-    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div><button class="folderOpen openMaterial" data-id="${m.id}"><div class="name">${escapeHtml(m.name||m.fileName||"Материал")} →</div></button>${query?`<div class="searchResultPath">${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions"><button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
+    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div style="flex:1"><button class="folderOpen openMaterial" data-id="${m.id}" style="width:100%;text-align:left"><div class="name">${escapeHtml(m.name||m.fileName||"Материал")} →</div></button>${query?`<div class="searchResultPath">${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions">${archiveMode?"":`<button class="secondary small archiveMaterial" data-id="${m.id}">В архив</button>`}<button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
     document.querySelectorAll(".openMaterial").forEach(b=>b.onclick=()=>openMaterialSecure(b.dataset.id));
+    document.querySelectorAll(".archiveMaterial").forEach(b=>b.onclick=async()=>{
+      const m=allMaterials.find(x=>x.id===b.dataset.id);if(!m)return;
+      if(!confirm(`Переместить материал «${m.name||m.fileName||"Материал"}» в архив?`))return;
+      try{
+        await setDoc(doc(db,"materialItems",m.id),{
+          archived:true,
+          archivedAt:serverTimestamp(),
+          previousFolderId:m.folderId||currentFolderId||null,
+          updatedAt:serverTimestamp()
+        },{merge:true});
+        msg($("sectionMsg"),"Материал перемещён в архив.","ok");
+        await loadSections();
+        await loadMaterialsUpdatedAt();
+      }catch(e){msg($("sectionMsg"),friendly(e))}
+    });
     document.querySelectorAll(".deleteMaterial").forEach(b=>b.onclick=async()=>{
       const m=allMaterials.find(x=>x.id===b.dataset.id);if(!m)return;
       if(!confirm(`Удалить материал «${m.name||m.fileName||"Материал"}»? Это действие нельзя отменить.`))return;
