@@ -42,12 +42,15 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
       <div><div class="brand" style="text-align:left"><div class="logo" style="font-size:31px;margin:0;letter-spacing:6px">FLO <span style="font-size:1em;letter-spacing:6px">ACADEMY</span></div></div><h1 style="margin-top:18px">Администратор</h1><div id="adminEmail" class="sub"></div></div>
       <div class="actions"><button id="logoutBtn" class="secondary">Выйти</button></div>
     </div>
+    <div class="searchBox"><input id="adminGlobalSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
+    <div id="adminSearchResults" class="list hidden"></div>
     <div class="grid">
       <button id="openEmployeesBtn" class="tile tileButton"><b id="countEmployees">0</b><span>Сотрудники →</span></button>
       <button id="openMaterialsBtn" class="tile tileButton"><b id="countSections">0</b><span>Материалы →</span></button>
-      <button id="openArchiveBtn" class="tile tileButton archiveTile"><b>Архив</b><span>Только для администратора →</span></button>
+      <button id="openTestsBtn" class="tile tileButton"><b>Тесты</b><span>Следующий этап →</span></button>
     </div>
     <div class="adminBottom">
+      <button id="openArchiveBtn" class="tile tileButton archiveTile" style="margin-bottom:18px"><b>Архив</b><span>Только для администратора →</span></button>
       <div class="updatedLine">Материалы обновлены: <b id="materialsUpdatedAt">—</b></div>
       <div class="adminBottomTitle">Структура и резервная копия</div>
       <div class="adminBottomActions">
@@ -101,7 +104,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
   <section id="employeeView" class="card hidden">
     <div class="brand"><div class="logo academyLogo">FLO <span>ACADEMY</span></div><div class="tag">FOOD LOVERS ONLY · СДЕЛАНО В ПЕТЕРБУРГЕ</div></div>
     <div class="rule"></div><h1>Обучение</h1><div id="employeeHello" class="sub"></div>
-    <div class="searchBox"><input id="employeeMaterialSearch" type="search" placeholder="Поиск"></div>
+    <div class="searchBox"><input id="employeeMaterialSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
     <div id="employeeBreadcrumb" class="breadcrumbs"></div>
     <div id="employeeSections" class="grid"></div>
     <button id="employeeLogoutBtn" class="secondary">Выйти</button>
@@ -188,7 +191,9 @@ if($("addBtn"))$("addBtn").onclick=()=>{$("modal").classList.remove("hidden");ms
 $("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");$("backToAdminBtn").onclick=()=>{currentFolderId=null;show("adminView")};
 $("openEmployeesBtn").onclick=async()=>{show("employeesView");await loadEmployees()};
 $("openMaterialsBtn").onclick=async()=>{currentFolderId=null;show("materialsView");await loadSections(true)};
+$("openTestsBtn").onclick=()=>alert("Раздел тестов добавим следующим этапом.");
 $("openArchiveBtn").onclick=async()=>{show("materialsView");const sections=await ensureDefaultSections();const archive=await ensureArchiveFolder(sections);currentFolderId=archive.id;await loadSections()};
+$("adminGlobalSearch").addEventListener("input",runAdminGlobalSearch);
 $("closeAccessModal").onclick=()=>$("accessModal").classList.add("hidden");
 $("adminMaterialSearch").addEventListener("input",()=>loadSections());
 $("employeeMaterialSearch").addEventListener("input",()=>loadEmployeeSections());
@@ -328,6 +333,32 @@ function searchHaystackMaterial(m){return `${m.name||""} ${m.fileName||""} ${(Ar
 function materialPath(sections,m){
   const folder=getFolderById(sections,m.folderId||null);return folder?getFolderPath(sections,folder.id).map(x=>x.name).join(" / "):"Материалы";
 }
+
+async function runAdminGlobalSearch(){
+  const box=$("adminGlobalSearch"),results=$("adminSearchResults");
+  const q=box.value.trim().toLocaleLowerCase("ru");
+  if(!q){results.innerHTML="";results.classList.add("hidden");return}
+  try{
+    const [sections,items]=await Promise.all([readSections(),readMaterials()]);
+    const folderHits=sections.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(q));
+    const materialHits=items.filter(m=>!m.archived&&searchHaystackMaterial(m).includes(q));
+    const folderHtml=folderHits.map(s=>`<button class="tile tileButton adminSearchFolder" data-id="${s.id}" style="margin-bottom:8px"><b>${escapeHtml(s.name||"Папка")} →</b><span>${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</span></button>`).join("");
+    const materialHtml=materialHits.map(m=>`<button class="tile tileButton adminSearchMaterial" data-folder="${escapeHtml(m.folderId||"")}" data-url="${escapeHtml(m.url||"")}" style="margin-bottom:8px"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${escapeHtml(materialPath(sections,m))}</span></button>`).join("");
+    results.innerHTML=(folderHtml+materialHtml)||`<div class="notice">Ничего не найдено.</div>`;
+    results.classList.remove("hidden");
+    results.querySelectorAll(".adminSearchFolder").forEach(b=>b.onclick=async()=>{
+      currentFolderId=b.dataset.id;show("materialsView");$("adminMaterialSearch").value="";await loadSections();
+    });
+    results.querySelectorAll(".adminSearchMaterial").forEach(b=>b.onclick=async()=>{
+      if(b.dataset.url){window.open(b.dataset.url,"_blank");return}
+      currentFolderId=b.dataset.folder||null;show("materialsView");$("adminMaterialSearch").value="";await loadSections();
+    });
+  }catch(e){
+    results.innerHTML=`<div class="notice error">${escapeHtml(friendly(e))}</div>`;
+    results.classList.remove("hidden");
+  }
+}
+
 async function loadSections(createDefaults=false){
   try{
     const sections=createDefaults?await ensureDefaultSections():await readSections();
@@ -361,10 +392,8 @@ async function loadSections(createDefaults=false){
       const kids=getChildren(refreshed,s.id).filter(x=>!x.isArchive);
       const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");
       const access=allowedPositions(s);const accessText=access.length?access.join(", "):"Все должности";
-      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><div class="sortBtns"><button class="secondary small moveUp" data-id="${s.id}">↑</button><button class="secondary small moveDown" data-id="${s.id}">↓</button></div><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
+      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
     document.querySelectorAll(".folderOpen").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id;$("adminMaterialSearch").value="";msg($("sectionMsg"),"");await loadSections()});
-    document.querySelectorAll(".moveUp").forEach(b=>b.onclick=()=>moveSection(b.dataset.id,-1,refreshed));
-    document.querySelectorAll(".moveDown").forEach(b=>b.onclick=()=>moveSection(b.dataset.id,1,refreshed));
     document.querySelectorAll(".accessSection").forEach(b=>b.onclick=()=>{const item=getFolderById(refreshed,b.dataset.id);if(item)openAccessModal(item)});
     document.querySelectorAll(".renameSection").forEach(button=>button.onclick=async()=>{
       const item=getFolderById(refreshed,button.dataset.id);if(!item)return;const next=prompt("Новое название папки:",item.name||"");if(next===null)return;const name=next.trim();if(!name)return;
