@@ -19,7 +19,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
 .notice{padding:12px 14px;border-radius:12px;background:#f4f2ed;font-size:14px;margin:12px 0}.error{background:#f8e9e9;color:#8a3030}.ok{background:#eaf4ec;color:#32623c}
 .modal{position:fixed;inset:0;background:rgba(30,30,30,.28);display:flex;align-items:center;justify-content:center;padding:18px}.modalbox{background:white;border-radius:22px;padding:26px;width:min(520px,100%);max-height:90vh;overflow:auto}
 .inlineForm{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.inlineForm input{margin:0}.inlineForm .primary{width:auto;margin:0;white-space:nowrap}.sectionIcon{width:42px;height:42px;border-radius:12px;background:#eeece7;display:grid;place-items:center;font:20px Georgia,serif;flex:0 0 auto}.sectionInfo{display:flex;align-items:center;gap:12px}
-.folderOpen{background:transparent;padding:0;text-align:left;color:inherit}.folderOpen:hover .name{text-decoration:underline}.breadcrumbs{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:0 0 20px}.crumb{background:transparent;padding:4px 2px;color:#61666b}.crumb:hover{text-decoration:underline}.crumbCurrent{font-weight:650;color:var(--text)}.levelBadge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eeece7;color:#666;font-size:12px;margin-left:8px}.folderActions{display:flex;gap:7px;flex-wrap:wrap}.limitHint{font-size:12px;color:#777;margin-top:8px}.sectionHeader{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.academyLogo span{font-size:1em;letter-spacing:8px;vertical-align:baseline;margin-left:8px}.miniTree{margin-top:7px;font-size:12px;color:#777;line-height:1.5}.miniTree span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}.folderNameRow{display:flex;align-items:center;gap:6px}
+.folderOpen{background:transparent;padding:0;text-align:left;color:inherit}.folderOpen:hover .name{text-decoration:underline}.breadcrumbs{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:0 0 20px}.crumb{background:transparent;padding:4px 2px;color:#61666b}.crumb:hover{text-decoration:underline}.crumbCurrent{font-weight:650;color:var(--text)}.levelBadge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eeece7;color:#666;font-size:12px;margin-left:8px}.folderActions{display:flex;gap:7px;flex-wrap:wrap}.limitHint{font-size:12px;color:#777;margin-top:8px}.sectionHeader{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.academyLogo span{font-size:1em;letter-spacing:8px;vertical-align:baseline;margin-left:8px}.miniTree{margin-top:7px;font-size:12px;color:#777;line-height:1.5}.miniTree span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}.folderNameRow{display:flex;align-items:center;gap:6px}.searchBox{margin:0 0 18px}.searchBox input{margin:0}.adminBottom{margin-top:30px;padding-top:22px;border-top:1px solid var(--line)}.adminBottomTitle{font:18px Georgia,serif;margin-bottom:12px}.adminBottomActions{display:flex;gap:8px;flex-wrap:wrap}.adminBottomActions button{flex:1;min-width:150px}.updatedLine{font-size:13px;color:#666;margin-bottom:14px}.accessTag{display:inline-block;font-size:11px;padding:3px 7px;border-radius:999px;background:#eeece7;color:#666;margin-top:6px}.sortBtns{display:flex;gap:5px}.sortBtns button{padding:8px 10px}.archiveTile b{font-size:18px}.materialRow{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #eeeae3;padding:14px 2px}.materialRow:first-child{border-top:0}.modalChecks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.checkItem{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:11px}.checkItem input{width:auto;margin:0}.searchResultPath{font-size:12px;color:#777;margin-top:3px}.toolsMsg{margin-top:10px}
 @media(max-width:600px){.wrap{padding:16px 12px 40px}.card{padding:25px 20px;border-radius:22px}.logo{font-size:44px}.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.actions{width:100%}.actions button{flex:1}.inlineForm{grid-template-columns:1fr}.inlineForm .primary{width:100%}.row{align-items:flex-start;flex-direction:column}.folderActions{width:100%}.folderActions button{flex:1}}
 </style>
 </head>
@@ -44,8 +44,19 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
     </div>
     <div class="grid">
       <button id="openEmployeesBtn" class="tile tileButton"><b id="countEmployees">0</b><span>Сотрудники →</span></button>
-      <button id="openMaterialsBtn" class="tile tileButton"><b id="countSections">0</b><span>Разделы материалов →</span></button>
-      <div class="tile"><b>Тесты</b><span>Следующий этап</span></div>
+      <button id="openMaterialsBtn" class="tile tileButton"><b id="countSections">0</b><span>Материалы →</span></button>
+      <button id="openArchiveBtn" class="tile tileButton archiveTile"><b>Архив</b><span>Только для администратора →</span></button>
+    </div>
+    <div class="adminBottom">
+      <div class="updatedLine">Материалы обновлены: <b id="materialsUpdatedAt">—</b></div>
+      <div class="adminBottomTitle">Структура и резервная копия</div>
+      <div class="adminBottomActions">
+        <button id="exportStructureBtn" class="secondary">Экспорт структуры</button>
+        <button id="importStructureBtn" class="secondary">Импорт структуры</button>
+        <button id="backupBtn" class="secondary">Резервная копия</button>
+      </div>
+      <input id="importStructureInput" class="hidden" type="file" accept="application/json,.json">
+      <div id="toolsMsg" class="toolsMsg"></div>
     </div>
   </section>
 
@@ -69,6 +80,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
       <div class="actions"><button id="backToAdminBtn" class="secondary">← Назад</button><button id="materialsLogoutBtn" class="secondary">Выйти</button></div>
     </div>
     <div class="rule"></div>
+    <div class="searchBox"><input id="adminMaterialSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
     <div id="sectionBreadcrumb" class="breadcrumbs"></div>
     <div class="sectionHeader"><h2 id="createFolderTitle">Создать раздел</h2></div>
     <div id="createFolderSub" class="sub"></div>
@@ -81,11 +93,15 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
     <div class="rule"></div>
     <div class="top"><div><h2 id="foldersHeading">Разделы</h2><div id="foldersSub" class="sub" style="margin-bottom:0">Откройте раздел, чтобы создать папки внутри</div></div></div>
     <div id="sectionList" class="list"></div>
+    <div class="rule"></div>
+    <div><h2>Материалы</h2></div>
+    <div id="materialList" class="list"></div>
   </section>
 
   <section id="employeeView" class="card hidden">
     <div class="brand"><div class="logo academyLogo">FLO <span>ACADEMY</span></div><div class="tag">FOOD LOVERS ONLY · СДЕЛАНО В ПЕТЕРБУРГЕ</div></div>
     <div class="rule"></div><h1>Обучение</h1><div id="employeeHello" class="sub"></div>
+    <div class="searchBox"><input id="employeeMaterialSearch" type="search" placeholder="Поиск"></div>
     <div id="employeeBreadcrumb" class="breadcrumbs"></div>
     <div id="employeeSections" class="grid"></div>
     <button id="employeeLogoutBtn" class="secondary">Выйти</button>
@@ -107,6 +123,16 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
  </div>
 </div>
 
+<div id="accessModal" class="modal hidden">
+  <div class="modalbox">
+    <div class="top"><div><h2>Доступ к папке</h2><div class="sub" id="accessFolderName"></div></div><button id="closeAccessModal" class="secondary">Закрыть</button></div>
+    <div class="sub">Если ничего не выбрано, папка доступна всем должностям.</div>
+    <div id="accessChecks" class="modalChecks"></div>
+    <button id="saveAccessBtn" class="primary">Сохранить доступ</button>
+    <div id="accessMsg"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
@@ -125,10 +151,14 @@ const firebaseConfig = {
 const DEFAULT_MATERIAL_SECTIONS=["Сервис","Бар","Кухня"];
 const MAX_FOLDER_DEPTH=10;
 const MAX_CHILD_FOLDERS=10;
+const POSITIONS=["Хостес","Официант","Бармен","Менеджер","Сомелье","Барменеджер","Управляющий","Повар","Су-шеф","Мойщица"];
+const ARCHIVE_NAME="Архив";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);
 let currentFolderId=null;
 let employeeFolderId=null;
+let currentEmployeePosition="";
+let accessEditingFolderId=null;
 
 function show(id){["loginView","adminView","employeesView","materialsView","employeeView"].forEach(x=>$(x).classList.add("hidden"));$(id).classList.remove("hidden")}
 function msg(el,text,type="error"){el.innerHTML=text?`<div class="notice ${type}">${escapeHtml(text)}</div>`:""}
@@ -136,12 +166,36 @@ function friendly(e){const c=e?.code||"";if(c.includes("invalid-credential")||c.
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function normalizedParent(s){return s.parentId||null}
 function normalizedDepth(s){return Number(s.depth)||1}
+function allowedPositions(s){return Array.isArray(s.allowedPositions)?s.allowedPositions:[]}
+function folderAllowedForPosition(s,position){if(s?.isArchive)return false;const a=allowedPositions(s);return !a.length||a.includes(position)}
+function formatDate(v){
+  try{
+    const d=v?.toDate?v.toDate():(v instanceof Date?v:(v?new Date(v):null));
+    if(!d||Number.isNaN(d.getTime()))return "—";
+    return d.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  }catch{return "—"}
+}
+function downloadJson(filename,data){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function safeExportSection(s){return {id:s.id,name:s.name||"",parentId:normalizedParent(s),depth:normalizedDepth(s),order:s.order??999,allowedPositions:allowedPositions(s),isArchive:!!s.isArchive}}
+function safeExportMaterial(m){return {id:m.id,name:m.name||"",folderId:m.folderId||null,order:m.order??999,fileName:m.fileName||"",keywords:Array.isArray(m.keywords)?m.keywords:[],url:m.url||"",searchText:m.searchText||m.extractedText||"",archived:!!m.archived}}
 
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();msg($("loginMsg"),"");try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value)}catch(err){msg($("loginMsg"),friendly(err))}});
 $("logoutBtn").onclick=()=>signOut(auth);$("employeesLogoutBtn").onclick=()=>signOut(auth);$("materialsLogoutBtn").onclick=()=>signOut(auth);$("employeeLogoutBtn").onclick=()=>signOut(auth);
 if($("addBtn"))$("addBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("addEmployeeFromListBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("closeModal").onclick=()=>$("modal").classList.add("hidden");
 $("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");$("backToAdminBtn").onclick=()=>{currentFolderId=null;show("adminView")};
-$("openEmployeesBtn").onclick=async()=>{show("employeesView");await loadEmployees()};$("openMaterialsBtn").onclick=async()=>{currentFolderId=null;show("materialsView");await loadSections(true)};
+$("openEmployeesBtn").onclick=async()=>{show("employeesView");await loadEmployees()};
+$("openMaterialsBtn").onclick=async()=>{currentFolderId=null;show("materialsView");await loadSections(true)};
+$("openArchiveBtn").onclick=async()=>{show("materialsView");const sections=await ensureDefaultSections();const archive=await ensureArchiveFolder(sections);currentFolderId=archive.id;await loadSections()};
+$("closeAccessModal").onclick=()=>$("accessModal").classList.add("hidden");
+$("adminMaterialSearch").addEventListener("input",()=>loadSections());
+$("employeeMaterialSearch").addEventListener("input",()=>loadEmployeeSections());
+$("exportStructureBtn").onclick=exportStructure;
+$("importStructureBtn").onclick=()=>$("importStructureInput").click();
+$("importStructureInput").addEventListener("change",importStructureFromFile);
+$("backupBtn").onclick=createBackup;
 
 async function isAdmin(uid){const s=await getDoc(doc(db,"users",uid));return s.exists()&&s.data().role==="admin"}
 
@@ -166,6 +220,34 @@ async function readSections(){
   return sections.sort((a,b)=>(a.order??999)-(b.order??999)||(a.name||"").localeCompare(b.name||"","ru"));
 }
 
+async function readMaterials(){
+  try{
+    const snap=await getDocs(collection(db,"materialItems"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));
+    return items.sort((a,b)=>(a.order??999)-(b.order??999)||(a.name||"").localeCompare(b.name||"","ru"));
+  }catch(e){
+    if((e?.code||"").includes("permission-denied"))return [];
+    throw e;
+  }
+}
+async function ensureArchiveFolder(sections=null){
+  const all=sections||await readSections();let archive=all.find(s=>s.isArchive===true);
+  if(archive)return archive;
+  const id=await createSection(ARCHIVE_NAME,null,1,Number.MAX_SAFE_INTEGER);
+  await setDoc(doc(db,"materialSections",id),{isArchive:true,allowedPositions:[]},{merge:true});
+  return {id,name:ARCHIVE_NAME,parentId:null,depth:1,order:Number.MAX_SAFE_INTEGER,isArchive:true,allowedPositions:[]};
+}
+async function loadMaterialsUpdatedAt(){
+  try{
+    const items=await readMaterials();
+    const latest=items.map(x=>x.updatedAt||x.createdAt).filter(Boolean).sort((a,b)=>{
+      const ta=a?.toDate?a.toDate().getTime():new Date(a).getTime();
+      const tb=b?.toDate?b.toDate().getTime():new Date(b).getTime();
+      return tb-ta;
+    })[0];
+    $("materialsUpdatedAt").textContent=latest?formatDate(latest):"—";
+  }catch{$("materialsUpdatedAt").textContent="—"}
+}
+
 async function createSection(name,parentId=null,depth=1,order=Date.now()){
   const ref=doc(collection(db,"materialSections"));
   await setDoc(ref,{name:name.trim(),parentId:parentId||null,depth,order,createdAt:serverTimestamp(),createdBy:auth.currentUser.uid});
@@ -174,7 +256,7 @@ async function createSection(name,parentId=null,depth=1,order=Date.now()){
 
 async function ensureDefaultSections(){
   let sections=await readSections();
-  if(sections.length)return sections;
+  if(sections.some(s=>!s.isArchive))return sections;
   await Promise.all(DEFAULT_MATERIAL_SECTIONS.map((name,index)=>createSection(name,null,1,index)));
   return readSections();
 }
@@ -199,43 +281,132 @@ function renderEmployeeBreadcrumb(sections){
   $("employeeBreadcrumb").querySelectorAll(".crumb").forEach(b=>b.onclick=async()=>{employeeFolderId=b.dataset.folder||null;await loadEmployeeSections()});
 }
 
+
+function openAccessModal(folder){
+  accessEditingFolderId=folder.id;
+  $("accessFolderName").textContent=folder.name||"Папка";
+  const selected=new Set(allowedPositions(folder));
+  $("accessChecks").innerHTML=POSITIONS.map(p=>`<label class="checkItem"><input type="checkbox" value="${escapeHtml(p)}" ${selected.has(p)?"checked":""}><span>${escapeHtml(p)}</span></label>`).join("");
+  msg($("accessMsg"),"");
+  $("accessModal").classList.remove("hidden");
+}
+$("saveAccessBtn").onclick=async()=>{
+  if(!accessEditingFolderId)return;
+  const selected=[...$("accessChecks").querySelectorAll("input:checked")].map(x=>x.value);
+  try{
+    await setDoc(doc(db,"materialSections",accessEditingFolderId),{allowedPositions:selected},{merge:true});
+    msg($("accessMsg"),"Доступ сохранён.","ok");
+    await loadSections();
+    setTimeout(()=>$("accessModal").classList.add("hidden"),500);
+  }catch(e){msg($("accessMsg"),friendly(e))}
+};
+
+async function moveSection(sectionId,direction,sections){
+  const item=getFolderById(sections,sectionId);if(!item)return;
+  const siblings=getChildren(sections,normalizedParent(item)).filter(s=>!s.isArchive).sort((a,b)=>(a.order??999)-(b.order??999));
+  const idx=siblings.findIndex(s=>s.id===sectionId),next=idx+direction;if(idx<0||next<0||next>=siblings.length)return;
+  const other=siblings[next],a=item.order??idx,b=other.order??next;
+  await Promise.all([
+    setDoc(doc(db,"materialSections",item.id),{order:b},{merge:true}),
+    setDoc(doc(db,"materialSections",other.id),{order:a},{merge:true})
+  ]);
+  await loadSections();
+}
+async function moveMaterial(materialId,direction,items){
+  const item=items.find(x=>x.id===materialId);if(!item)return;
+  const siblings=items.filter(x=>(x.folderId||null)===(item.folderId||null)).sort((a,b)=>(a.order??999)-(b.order??999));
+  const idx=siblings.findIndex(x=>x.id===materialId),next=idx+direction;if(idx<0||next<0||next>=siblings.length)return;
+  const other=siblings[next],a=item.order??idx,b=other.order??next;
+  await Promise.all([
+    setDoc(doc(db,"materialItems",item.id),{order:b,updatedAt:serverTimestamp()},{merge:true}),
+    setDoc(doc(db,"materialItems",other.id),{order:a,updatedAt:serverTimestamp()},{merge:true})
+  ]);
+  await loadSections();await loadMaterialsUpdatedAt();
+}
+function searchHaystackFolder(s){return `${s.name||""}`.toLocaleLowerCase("ru")}
+function searchHaystackMaterial(m){return `${m.name||""} ${m.fileName||""} ${(Array.isArray(m.keywords)?m.keywords.join(" "):"")} ${m.searchText||m.extractedText||""}`.toLocaleLowerCase("ru")}
+function materialPath(sections,m){
+  const folder=getFolderById(sections,m.folderId||null);return folder?getFolderPath(sections,folder.id).map(x=>x.name).join(" / "):"Материалы";
+}
 async function loadSections(createDefaults=false){
   try{
     const sections=createDefaults?await ensureDefaultSections():await readSections();
-    if(currentFolderId&&!getFolderById(sections,currentFolderId))currentFolderId=null;
-    const current=getFolderById(sections,currentFolderId);const currentDepth=current?normalizedDepth(current):0;const children=getChildren(sections,currentFolderId);const roots=getChildren(sections,null);
-    $("countSections").textContent=roots.length;if($("materialsCountLabel"))$("materialsCountLabel").textContent=`${children.length}/${MAX_CHILD_FOLDERS}`;
-    renderAdminBreadcrumb(sections);
-    $("createFolderTitle").textContent=currentFolderId?"Создать папку":"Создать раздел";
+    await ensureArchiveFolder(sections);
+    const refreshed=await readSections();
+    if(currentFolderId&&!getFolderById(refreshed,currentFolderId))currentFolderId=null;
+    const current=getFolderById(refreshed,currentFolderId);const currentDepth=current?normalizedDepth(current):0;
+    const archiveMode=!!current?.isArchive;
+    let children=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive);
+    const roots=getChildren(refreshed,null).filter(s=>!s.isArchive);
+    const query=$("adminMaterialSearch").value.trim().toLocaleLowerCase("ru");
+    const allMaterials=await readMaterials();
+    let visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===(currentFolderId||null));
+    if(archiveMode)visibleMaterials=allMaterials.filter(m=>m.archived===true||(m.folderId||null)===currentFolderId);
+    if(query){
+      children=refreshed.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(query));
+      visibleMaterials=allMaterials.filter(m=>searchHaystackMaterial(m).includes(query));
+    }
+    $("countSections").textContent=roots.length;
+    renderAdminBreadcrumb(refreshed);
+    $("createFolderTitle").textContent=archiveMode?"Архив":(currentFolderId?"Создать папку":"Создать раздел");
     $("createFolderSub").textContent="";
-    $("foldersHeading").textContent=currentFolderId?"Папки":"Разделы";
-    $("foldersSub").textContent=currentFolderId?"Откройте папку, чтобы перейти глубже":"Откройте раздел, чтобы создать папки внутри";
-    const nextDepth=currentDepth+1;
-    const atDepthLimit=currentDepth>=MAX_FOLDER_DEPTH;const atCountLimit=children.length>=MAX_CHILD_FOLDERS;const createDisabled=atDepthLimit||atCountLimit;
+    $("foldersHeading").textContent=archiveMode?"Папки архива":(currentFolderId?"Папки":"Разделы");
+    $("foldersSub").textContent=query?"Результаты поиска":(archiveMode?"Архив виден только администраторам":(currentFolderId?"Откройте папку, чтобы перейти глубже":"Откройте раздел, чтобы создать папки внутри"));
+    const atDepthLimit=currentDepth>=MAX_FOLDER_DEPTH;const atCountLimit=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive).length>=MAX_CHILD_FOLDERS;const createDisabled=archiveMode||atDepthLimit||atCountLimit||!!query;
+    $("sectionForm").classList.toggle("hidden",archiveMode||!!query);
     $("sectionName").disabled=createDisabled;$("createSectionBtn").disabled=createDisabled;
     $("createSectionBtn").textContent=atDepthLimit?"Максимум 10 уровней":atCountLimit?"Максимум 10 папок":"+ Создать";
-    $("folderLimitHint").textContent=atDepthLimit?"Достигнут максимальный уровень вложенности. Материалы сюда добавлять можно, новые папки — нет.":`${children.length} из ${MAX_CHILD_FOLDERS} папок на этом уровне.`;
-    $("sectionList").innerHTML=children.length?children.map(s=>{const kids=getChildren(sections,s.id);const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}</div></div></button><div class="folderActions"><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">На этом уровне папок пока нет.</div>`;
-    document.querySelectorAll(".folderOpen").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id;msg($("sectionMsg"),"");await loadSections()});
+    $("folderLimitHint").textContent=atDepthLimit?"Достигнут максимальный уровень вложенности. Материалы сюда добавлять можно, новые папки — нет.":"";
+    $("sectionList").innerHTML=children.length?children.map(s=>{
+      const kids=getChildren(refreshed,s.id).filter(x=>!x.isArchive);
+      const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");
+      const access=allowedPositions(s);const accessText=access.length?access.join(", "):"Все должности";
+      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><div class="sortBtns"><button class="secondary small moveUp" data-id="${s.id}">↑</button><button class="secondary small moveDown" data-id="${s.id}">↓</button></div><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
+    document.querySelectorAll(".folderOpen").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id;$("adminMaterialSearch").value="";msg($("sectionMsg"),"");await loadSections()});
+    document.querySelectorAll(".moveUp").forEach(b=>b.onclick=()=>moveSection(b.dataset.id,-1,refreshed));
+    document.querySelectorAll(".moveDown").forEach(b=>b.onclick=()=>moveSection(b.dataset.id,1,refreshed));
+    document.querySelectorAll(".accessSection").forEach(b=>b.onclick=()=>{const item=getFolderById(refreshed,b.dataset.id);if(item)openAccessModal(item)});
     document.querySelectorAll(".renameSection").forEach(button=>button.onclick=async()=>{
-      const item=getFolderById(sections,button.dataset.id);if(!item)return;const next=prompt("Новое название папки:",item.name||"");if(next===null)return;const name=next.trim();if(!name)return;
-      const siblings=getChildren(sections,normalizedParent(item));if(siblings.some(s=>s.id!==item.id&&(s.name||"").trim().toLocaleLowerCase("ru")===name.toLocaleLowerCase("ru"))){msg($("sectionMsg"),"На этом уровне уже есть папка с таким названием.");return}
-      try{await setDoc(doc(db,"materialSections",item.id),{name},{merge:true});msg($("sectionMsg"),"Название изменено.","ok");await loadSections()}catch(e){msg($("sectionMsg"),friendly(e))}
+      const item=getFolderById(refreshed,button.dataset.id);if(!item)return;const next=prompt("Новое название папки:",item.name||"");if(next===null)return;const name=next.trim();if(!name)return;
+      const siblings=getChildren(refreshed,normalizedParent(item));if(siblings.some(s=>s.id!==item.id&&(s.name||"").trim().toLocaleLowerCase("ru")===name.toLocaleLowerCase("ru"))){msg($("sectionMsg"),"На этом уровне уже есть папка с таким названием.");return}
+      try{await setDoc(doc(db,"materialSections",item.id),{name,updatedAt:serverTimestamp()},{merge:true});msg($("sectionMsg"),"Название изменено.","ok");await loadSections()}catch(e){msg($("sectionMsg"),friendly(e))}
     });
     document.querySelectorAll(".deleteSection").forEach(button=>button.onclick=async()=>{
-      const item=getFolderById(sections,button.dataset.id);if(!item)return;const childCount=getChildren(sections,item.id).length;if(childCount){msg($("sectionMsg"),`Сначала удалите ${childCount} вложенных папок внутри «${item.name}».`);return}
-      if(!confirm(`Удалить папку «${item.name}»?`))return;
+      const item=getFolderById(refreshed,button.dataset.id);if(!item)return;const childCount=getChildren(refreshed,item.id).length;const materialCount=allMaterials.filter(m=>(m.folderId||null)===item.id).length;
+      if(childCount||materialCount){msg($("sectionMsg"),`Сначала удалите содержимое папки «${item.name}».`);return}
+      if(!confirm(`Удалить папку «${item.name}»? Это действие нельзя отменить.`))return;
       try{button.disabled=true;await deleteDoc(doc(db,"materialSections",item.id));msg($("sectionMsg"),"Папка удалена.","ok");await loadSections()}catch(e){button.disabled=false;msg($("sectionMsg"),friendly(e))}
     });
-    return sections;
+
+    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div><div class="name">${escapeHtml(m.name||m.fileName||"Материал")}</div>${query?`<div class="searchResultPath">${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions"><div class="sortBtns"><button class="secondary small moveMaterialUp" data-id="${m.id}">↑</button><button class="secondary small moveMaterialDown" data-id="${m.id}">↓</button></div><button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
+    document.querySelectorAll(".moveMaterialUp").forEach(b=>b.onclick=()=>moveMaterial(b.dataset.id,-1,allMaterials));
+    document.querySelectorAll(".moveMaterialDown").forEach(b=>b.onclick=()=>moveMaterial(b.dataset.id,1,allMaterials));
+    document.querySelectorAll(".deleteMaterial").forEach(b=>b.onclick=async()=>{
+      const m=allMaterials.find(x=>x.id===b.dataset.id);if(!m)return;
+      if(!confirm(`Удалить материал «${m.name||m.fileName||"Материал"}»? Это действие нельзя отменить.`))return;
+      try{await deleteDoc(doc(db,"materialItems",m.id));msg($("sectionMsg"),"Материал удалён.","ok");await loadSections();await loadMaterialsUpdatedAt()}catch(e){msg($("sectionMsg"),friendly(e))}
+    });
+    return refreshed;
   }catch(e){msg($("sectionMsg"),friendly(e));throw e}
 }
 
 async function loadEmployeeSections(){
   try{
-    const sections=await readSections();if(employeeFolderId&&!getFolderById(sections,employeeFolderId))employeeFolderId=null;const children=getChildren(sections,employeeFolderId);renderEmployeeBreadcrumb(sections);
-    $("employeeSections").innerHTML=children.length?children.map(s=>{const kids=getChildren(sections,s.id);const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");return `<button class="tile tileButton employeeFolder" data-id="${s.id}"><b>${escapeHtml(s.name||"Раздел")} →</b>${preview?`<div class="miniTree">${preview}</div>`:`<span>Открыть</span>`}</button>`}).join(""):`<div class="notice" style="grid-column:1/-1">В этой папке пока нет подразделов.</div>`;
-    document.querySelectorAll(".employeeFolder").forEach(b=>b.onclick=async()=>{employeeFolderId=b.dataset.id;await loadEmployeeSections()});
+    const sections=await readSections();if(employeeFolderId&&!getFolderById(sections,employeeFolderId))employeeFolderId=null;
+    const query=$("employeeMaterialSearch").value.trim().toLocaleLowerCase("ru");
+    const items=await readMaterials();
+    let folders=(query?sections:getChildren(sections,employeeFolderId)).filter(s=>folderAllowedForPosition(s,currentEmployeePosition));
+    let materials=items.filter(m=>(m.folderId||null)===(employeeFolderId||null)&&!m.archived);
+    if(query){
+      folders=sections.filter(s=>folderAllowedForPosition(s,currentEmployeePosition)&&searchHaystackFolder(s).includes(query));
+      materials=items.filter(m=>!m.archived&&searchHaystackMaterial(m).includes(query));
+    }
+    renderEmployeeBreadcrumb(sections);
+    const folderHtml=folders.map(s=>{const kids=getChildren(sections,s.id).filter(k=>folderAllowedForPosition(k,currentEmployeePosition));const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("");return `<button class="tile tileButton employeeFolder" data-id="${s.id}"><b>${escapeHtml(s.name||"Раздел")} →</b>${preview?`<div class="miniTree">${preview}</div>`:`<span>Открыть</span>`}${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</div>`:""}</button>`}).join("");
+    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-url="${escapeHtml(m.url||"")}"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${query?escapeHtml(materialPath(sections,m)):"Открыть материал"}</span></button>`).join("");
+    $("employeeSections").innerHTML=(folderHtml+materialHtml)||`<div class="notice" style="grid-column:1/-1">${query?"Ничего не найдено.":"В этой папке пока ничего нет."}</div>`;
+    document.querySelectorAll(".employeeFolder").forEach(b=>b.onclick=async()=>{employeeFolderId=b.dataset.id;$("employeeMaterialSearch").value="";await loadEmployeeSections()});
+    document.querySelectorAll(".employeeMaterial").forEach(b=>b.onclick=()=>{if(b.dataset.url)window.open(b.dataset.url,"_blank")});
   }catch(e){$("employeeSections").innerHTML=`<div class="notice error" style="grid-column:1/-1">${escapeHtml(friendly(e))}</div>`}
 }
 
@@ -246,9 +417,53 @@ $("sectionForm").addEventListener("submit",async e=>{
     if(currentDepth>=MAX_FOLDER_DEPTH)throw new Error("Достигнут максимум: 10 уровней вложенности.");
     if(children.length>=MAX_CHILD_FOLDERS)throw new Error("В одной папке можно создать максимум 10 папок.");
     if(children.some(s=>(s.name||"").trim().toLocaleLowerCase("ru")===name.toLocaleLowerCase("ru")))throw new Error("На этом уровне уже есть папка с таким названием.");
-    await createSection(name,currentFolderId,currentDepth+1);$("sectionForm").reset();msg($("sectionMsg"),currentFolderId?"Папка создана.":"Раздел создан.","ok");await loadSections();
+    const newId=await createSection(name,currentFolderId,currentDepth+1);await setDoc(doc(db,"materialSections",newId),{allowedPositions:[],updatedAt:serverTimestamp()},{merge:true});$("sectionForm").reset();msg($("sectionMsg"),currentFolderId?"Папка создана.":"Раздел создан.","ok");await loadSections();
   }catch(e){msg($("sectionMsg"),friendly(e))}
 });
+
+
+async function exportStructure(){
+  try{
+    const sections=await readSections(),materials=await readMaterials();
+    downloadJson(`FLO-ACADEMY-structure-${new Date().toISOString().slice(0,10)}.json`,{
+      type:"FLO_ACADEMY_STRUCTURE",version:1,exportedAt:new Date().toISOString(),
+      folders:sections.filter(s=>!s.isArchive).map(safeExportSection),
+      materials:materials.map(safeExportMaterial)
+    });
+    msg($("toolsMsg"),"Структура экспортирована.","ok");
+  }catch(e){msg($("toolsMsg"),friendly(e))}
+}
+async function importStructureFromFile(e){
+  const file=e.target.files?.[0];e.target.value="";if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(data.type!=="FLO_ACADEMY_STRUCTURE"||!Array.isArray(data.folders))throw new Error("Это не файл структуры FLO Academy.");
+    if(!confirm("Импортировать структуру? Текущие папки и метаданные материалов будут заменены. Продолжить?"))return;
+    const currentSections=await readSections(),currentMaterials=await readMaterials();
+    await Promise.all(currentMaterials.map(m=>deleteDoc(doc(db,"materialItems",m.id))));
+    await Promise.all(currentSections.filter(s=>!s.isArchive).map(s=>deleteDoc(doc(db,"materialSections",s.id))));
+    for(const f of data.folders){
+      await setDoc(doc(db,"materialSections",f.id),{name:f.name||"",parentId:f.parentId||null,depth:Number(f.depth)||1,order:f.order??999,allowedPositions:Array.isArray(f.allowedPositions)?f.allowedPositions:[],isArchive:false,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),createdBy:auth.currentUser.uid});
+    }
+    for(const m of (data.materials||[])){
+      await setDoc(doc(db,"materialItems",m.id),{name:m.name||"",folderId:m.folderId||null,order:m.order??999,fileName:m.fileName||"",keywords:Array.isArray(m.keywords)?m.keywords:[],url:m.url||"",searchText:m.searchText||"",archived:!!m.archived,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    }
+    currentFolderId=null;msg($("toolsMsg"),"Структура импортирована.","ok");await loadSections();await loadMaterialsUpdatedAt();
+  }catch(err){msg($("toolsMsg"),"Ошибка импорта: "+(err?.message||"неизвестная ошибка"))}
+}
+async function createBackup(){
+  try{
+    const [sections,materials,employees]=await Promise.all([readSections(),readMaterials(),getDocs(collection(db,"employees"))]);
+    const employeeData=[];employees.forEach(d=>employeeData.push({id:d.id,...d.data()}));
+    downloadJson(`FLO-ACADEMY-backup-${new Date().toISOString().slice(0,10)}.json`,{
+      type:"FLO_ACADEMY_BACKUP",version:1,createdAt:new Date().toISOString(),
+      note:"Пароли Firebase Authentication в резервную копию не входят.",
+      folders:sections.map(safeExportSection),materials:materials.map(safeExportMaterial),
+      employees:employeeData.map(x=>({id:x.id,name:x.name||"",email:x.email||"",position:x.position||"",active:x.active!==false}))
+    });
+    msg($("toolsMsg"),"Резервная копия скачана.","ok");
+  }catch(e){msg($("toolsMsg"),friendly(e))}
+}
 
 $("employeeForm").addEventListener("submit",async e=>{
   e.preventDefault();msg($("formMsg"),"");const admin=auth.currentUser;if(!admin)return;
@@ -266,10 +481,10 @@ onAuthStateChanged(auth,async user=>{
   try{
     const admin=await isAdmin(user.uid);
     if(admin){
-      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();
+      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();await loadMaterialsUpdatedAt();
       try{const sections=await readSections();$("countSections").textContent=getChildren(sections,null).length}catch(e){$("countSections").textContent="—"}
     }
-    else{const p=await getDoc(doc(db,"users",user.uid));$("employeeHello").textContent=p.exists()?`${p.data().name||user.email} · ${p.data().position||""}`:(user.email||"");employeeFolderId=null;show("employeeView");await loadEmployeeSections()}
+    else{const p=await getDoc(doc(db,"users",user.uid));currentEmployeePosition=p.exists()?(p.data().position||""):"";$("employeeHello").textContent=p.exists()?`${p.data().name||user.email} · ${currentEmployeePosition}`:(user.email||"");employeeFolderId=null;show("employeeView");await loadEmployeeSections()}
   }catch(e){msg($("loginMsg"),friendly(e));await signOut(auth);show("loginView")}
 });
 </script>
