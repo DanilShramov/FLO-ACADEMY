@@ -97,7 +97,12 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
     <div class="top"><div><h2 id="foldersHeading">Разделы</h2><div id="foldersSub" class="sub" style="margin-bottom:0">Откройте раздел, чтобы создать папки внутри</div></div></div>
     <div id="sectionList" class="list"></div>
     <div class="rule"></div>
-    <div><h2>Материалы</h2></div>
+    <div class="top">
+      <div><h2>Материалы</h2></div>
+      <button id="addMaterialBtn" class="secondary">+ Добавить материал</button>
+    </div>
+    <input id="materialFileInput" class="hidden" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/jpeg,image/png,image/webp">
+    <div id="materialUploadMsg"></div>
     <div id="materialList" class="list"></div>
   </section>
 
@@ -196,6 +201,11 @@ $("openArchiveBtn").onclick=async()=>{show("materialsView");const sections=await
 $("adminGlobalSearch").addEventListener("input",runAdminGlobalSearch);
 $("closeAccessModal").onclick=()=>$("accessModal").classList.add("hidden");
 $("adminMaterialSearch").addEventListener("input",()=>loadSections());
+$("addMaterialBtn").onclick=()=>{
+  if(!currentFolderId){msg($("materialUploadMsg"),"Сначала откройте папку, в которую нужно добавить материал.");return}
+  $("materialFileInput").click();
+};
+$("materialFileInput").addEventListener("change",uploadSelectedMaterial);
 $("employeeMaterialSearch").addEventListener("input",()=>loadEmployeeSections());
 $("exportStructureBtn").onclick=exportStructure;
 $("importStructureBtn").onclick=()=>$("importStructureInput").click();
@@ -334,6 +344,23 @@ function materialPath(sections,m){
   const folder=getFolderById(sections,m.folderId||null);return folder?getFolderPath(sections,folder.id).map(x=>x.name).join(" / "):"Материалы";
 }
 
+async function openMaterialSecure(materialId){
+  try{
+    const token=await auth.currentUser.getIdToken();
+    const r=await fetch(`/api/material-file?id=${encodeURIComponent(materialId)}`,{headers:{Authorization:`Bearer ${token}`}});
+    if(!r.ok){
+      let j={};try{j=await r.json()}catch{}
+      throw new Error(j.error||`HTTP ${r.status}`);
+    }
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    window.open(url,"_blank");
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){
+    alert("Не удалось открыть материал: "+(e?.message||"ошибка"));
+  }
+}
+
 async function runAdminGlobalSearch(){
   const box=$("adminGlobalSearch"),results=$("adminSearchResults");
   const q=box.value.trim().toLocaleLowerCase("ru");
@@ -356,6 +383,46 @@ async function runAdminGlobalSearch(){
   }catch(e){
     results.innerHTML=`<div class="notice error">${escapeHtml(friendly(e))}</div>`;
     results.classList.remove("hidden");
+  }
+}
+
+
+async function uploadSelectedMaterial(e){
+  const file=e.target.files?.[0];e.target.value="";
+  if(!file)return;
+  if(!currentFolderId){msg($("materialUploadMsg"),"Сначала откройте папку.");return}
+  const allowedExt=["pdf","doc","docx","xls","xlsx","jpg","jpeg","png","webp"];
+  const ext=(file.name.split(".").pop()||"").toLowerCase();
+  if(!allowedExt.includes(ext)){msg($("materialUploadMsg"),"Этот формат файла не поддерживается.");return}
+  try{
+    msg($("materialUploadMsg"),"Загрузка...","ok");
+    $("addMaterialBtn").disabled=true;
+    const token=await auth.currentUser.getIdToken();
+    const fd=new FormData();
+    fd.append("file",file);
+    fd.append("folderId",currentFolderId);
+    const r=await fetch("/api/upload-material",{method:"POST",headers:{Authorization:`Bearer ${token}`},body:fd});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);
+    await setDoc(doc(db,"materialItems",j.id),{
+      name:j.fileName,
+      fileName:j.fileName,
+      folderId:currentFolderId,
+      order:Date.now(),
+      storagePath:j.storagePath,
+      contentType:j.contentType||file.type||"",
+      size:j.size||file.size||0,
+      createdAt:serverTimestamp(),
+      updatedAt:serverTimestamp(),
+      archived:false
+    });
+    msg($("materialUploadMsg"),"Материал добавлен.","ok");
+    await loadSections();
+    await loadMaterialsUpdatedAt();
+  }catch(err){
+    msg($("materialUploadMsg"),"Ошибка загрузки: "+(err?.message||"неизвестная ошибка"));
+  }finally{
+    $("addMaterialBtn").disabled=false;
   }
 }
 
@@ -385,6 +452,7 @@ async function loadSections(createDefaults=false){
     $("foldersSub").textContent=query?"Результаты поиска":(archiveMode?"Архив виден только администраторам":(currentFolderId?"Откройте папку, чтобы перейти глубже":"Откройте раздел, чтобы создать папки внутри"));
     const atDepthLimit=currentDepth>=MAX_FOLDER_DEPTH;const atCountLimit=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive).length>=MAX_CHILD_FOLDERS;const createDisabled=archiveMode||atDepthLimit||atCountLimit||!!query;
     $("sectionForm").classList.toggle("hidden",archiveMode||!!query);
+    $("addMaterialBtn").classList.toggle("hidden",!currentFolderId||archiveMode||!!query);
     $("sectionName").disabled=createDisabled;$("createSectionBtn").disabled=createDisabled;
     $("createSectionBtn").textContent=atDepthLimit?"Максимум 10 уровней":atCountLimit?"Максимум 10 папок":"+ Создать";
     $("folderLimitHint").textContent=atDepthLimit?"Достигнут максимальный уровень вложенности. Материалы сюда добавлять можно, новые папки — нет.":"";
@@ -407,13 +475,20 @@ async function loadSections(createDefaults=false){
       try{button.disabled=true;await deleteDoc(doc(db,"materialSections",item.id));msg($("sectionMsg"),"Папка удалена.","ok");await loadSections()}catch(e){button.disabled=false;msg($("sectionMsg"),friendly(e))}
     });
 
-    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div><div class="name">${escapeHtml(m.name||m.fileName||"Материал")}</div>${query?`<div class="searchResultPath">${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions"><div class="sortBtns"><button class="secondary small moveMaterialUp" data-id="${m.id}">↑</button><button class="secondary small moveMaterialDown" data-id="${m.id}">↓</button></div><button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
-    document.querySelectorAll(".moveMaterialUp").forEach(b=>b.onclick=()=>moveMaterial(b.dataset.id,-1,allMaterials));
-    document.querySelectorAll(".moveMaterialDown").forEach(b=>b.onclick=()=>moveMaterial(b.dataset.id,1,allMaterials));
+    $("materialList").innerHTML=visibleMaterials.length?visibleMaterials.map(m=>`<div class="materialRow"><div><button class="folderOpen openMaterial" data-id="${m.id}"><div class="name">${escapeHtml(m.name||m.fileName||"Материал")} →</div></button>${query?`<div class="searchResultPath">${escapeHtml(materialPath(refreshed,m))}</div>`:""}</div><div class="folderActions"><button class="danger small deleteMaterial" data-id="${m.id}">Удалить</button></div></div>`).join(""):`<div class="notice">${query?"Материалы по запросу не найдены.":"Материалов пока нет."}</div>`;
+    document.querySelectorAll(".openMaterial").forEach(b=>b.onclick=()=>openMaterialSecure(b.dataset.id));
     document.querySelectorAll(".deleteMaterial").forEach(b=>b.onclick=async()=>{
       const m=allMaterials.find(x=>x.id===b.dataset.id);if(!m)return;
       if(!confirm(`Удалить материал «${m.name||m.fileName||"Материал"}»? Это действие нельзя отменить.`))return;
-      try{await deleteDoc(doc(db,"materialItems",m.id));msg($("sectionMsg"),"Материал удалён.","ok");await loadSections();await loadMaterialsUpdatedAt()}catch(e){msg($("sectionMsg"),friendly(e))}
+      try{
+        const token=await auth.currentUser.getIdToken();
+        const r=await fetch(`/api/delete-material?id=${encodeURIComponent(m.id)}`,{method:"DELETE",headers:{Authorization:`Bearer ${token}`}});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);
+        await deleteDoc(doc(db,"materialItems",m.id));
+        msg($("sectionMsg"),"Материал удалён.","ok");
+        await loadSections();await loadMaterialsUpdatedAt();
+      }catch(e){msg($("sectionMsg"),"Ошибка удаления: "+(e?.message||"неизвестная ошибка"))}
     });
     return refreshed;
   }catch(e){msg($("sectionMsg"),friendly(e));throw e}
@@ -432,10 +507,10 @@ async function loadEmployeeSections(){
     }
     renderEmployeeBreadcrumb(sections);
     const folderHtml=folders.map(s=>{const kids=getChildren(sections,s.id).filter(k=>folderAllowedForPosition(k,currentEmployeePosition));const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("");return `<button class="tile tileButton employeeFolder" data-id="${s.id}"><b>${escapeHtml(s.name||"Раздел")} →</b>${preview?`<div class="miniTree">${preview}</div>`:`<span>Открыть</span>`}${query?`<div class="searchResultPath">${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</div>`:""}</button>`}).join("");
-    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-url="${escapeHtml(m.url||"")}"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${query?escapeHtml(materialPath(sections,m)):"Открыть материал"}</span></button>`).join("");
+    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-id="${m.id}"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${query?escapeHtml(materialPath(sections,m)):"Открыть материал"}</span></button>`).join("");
     $("employeeSections").innerHTML=(folderHtml+materialHtml)||`<div class="notice" style="grid-column:1/-1">${query?"Ничего не найдено.":"В этой папке пока ничего нет."}</div>`;
     document.querySelectorAll(".employeeFolder").forEach(b=>b.onclick=async()=>{employeeFolderId=b.dataset.id;$("employeeMaterialSearch").value="";await loadEmployeeSections()});
-    document.querySelectorAll(".employeeMaterial").forEach(b=>b.onclick=()=>{if(b.dataset.url)window.open(b.dataset.url,"_blank")});
+    document.querySelectorAll(".employeeMaterial").forEach(b=>b.onclick=()=>openMaterialSecure(b.dataset.id));
   }catch(e){$("employeeSections").innerHTML=`<div class="notice error" style="grid-column:1/-1">${escapeHtml(friendly(e))}</div>`}
 }
 
