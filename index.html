@@ -28,7 +28,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
   <section id="loginView" class="card">
     <div class="brand"><div class="logo academyLogo">FLO <span>ACADEMY</span></div><div class="tag">FOOD LOVERS ONLY · СДЕЛАНО В ПЕТЕРБУРГЕ</div></div>
     <div class="rule"></div>
-    <h1>Обучение и стандарты</h1><div class="sub">Внутренняя система FLO</div>
+    <h1>Обучение и стандарты</h1>
     <form id="loginForm">
       <input id="email" type="email" placeholder="Email" autocomplete="username" required>
       <input id="password" type="password" placeholder="Пароль" autocomplete="current-password" required>
@@ -681,13 +681,38 @@ $("employeeForm").addEventListener("submit",async e=>{
 });
 
 onAuthStateChanged(auth,async user=>{
-  if(!user){currentFolderId=null;employeeFolderId=null;show("loginView");return}
+  if(!user){
+    currentFolderId=null;
+    employeeFolderId=null;
+    currentEmployeePosition="";
+    show("loginView");
+    return;
+  }
+
   try{
     const admin=await isAdmin(user.uid);
+
     if(admin){
-      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();await loadMaterialsUpdatedAt();await loadMaterialCounters();await loadMaterialCounters();
-      try{const sections=await readSections();currentEmployeePosition=p.exists()?(p.data().position||""):"";$("employeeHello").textContent=p.exists()?`${p.data().name||user.email} · ${currentEmployeePosition}`:(user.email||"");employeeFolderId=null;show("employeeView");await loadEmployeeSections()}
-  }catch(e){msg($("loginMsg"),friendly(e));await signOut(auth);show("loginView")}
+      $("adminEmail").textContent=user.email||"";
+      show("adminView");
+      await loadEmployees();
+      await loadMaterialsUpdatedAt();
+      await loadMaterialCounters();
+    }else{
+      const p=await getDoc(doc(db,"users",user.uid));
+      currentEmployeePosition=p.exists()?(p.data().position||""):"";
+      $("employeeHello").textContent=p.exists()
+        ? `${p.data().name||user.email} · ${currentEmployeePosition}`
+        : (user.email||"");
+      employeeFolderId=null;
+      show("employeeView");
+      await loadEmployeeSections();
+    }
+  }catch(e){
+    console.error(e);
+    msg($("loginMsg"),friendly(e));
+    show("loginView");
+  }
 });
 </script>
 </body></html>
