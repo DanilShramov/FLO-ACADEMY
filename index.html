@@ -107,12 +107,27 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
   </section>
 
   <section id="employeeView" class="card hidden">
-    <div class="brand"><div class="logo academyLogo">FLO <span>ACADEMY</span></div><div class="tag">FOOD LOVERS ONLY · СДЕЛАНО В ПЕТЕРБУРГЕ</div></div>
-    <div class="rule"></div><h1>Обучение</h1><div id="employeeHello" class="sub"></div>
+    <div class="top">
+      <div>
+        <div class="brand" style="text-align:left">
+          <div class="logo" style="font-size:31px;margin:0;letter-spacing:6px">FLO <span style="font-size:1em;letter-spacing:6px">ACADEMY</span></div>
+        </div>
+        <h1 style="margin-top:18px">Обучение</h1>
+        <div id="employeeHello" class="sub"></div>
+      </div>
+      <div class="actions">
+        <button id="employeeBackBtn" class="secondary">← Назад</button>
+        <button id="employeeHomeBtn" class="secondary">На главную</button>
+        <button id="employeeLogoutBtn" class="secondary">Выйти</button>
+      </div>
+    </div>
+    <div class="rule"></div>
     <div class="searchBox"><input id="employeeMaterialSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
     <div id="employeeBreadcrumb" class="breadcrumbs"></div>
     <div id="employeeSections" class="grid"></div>
-    <button id="employeeLogoutBtn" class="secondary">Выйти</button>
+    <div class="adminBottom" style="margin-top:24px">
+      <div class="updatedLine">Материалы обновлены: <b id="employeeMaterialsUpdatedAt">—</b></div>
+    </div>
   </section>
 </div>
 
@@ -205,7 +220,26 @@ function safeExportSection(s){return {id:s.id,name:s.name||"",parentId:normalize
 function safeExportMaterial(m){return {id:m.id,name:m.name||"",folderId:m.folderId||null,order:m.order??999,fileName:m.fileName||"",keywords:Array.isArray(m.keywords)?m.keywords:[],url:m.url||"",searchText:m.searchText||m.extractedText||"",archived:!!m.archived}}
 
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();msg($("loginMsg"),"");try{await signInWithEmailAndPassword(auth,$("email").value.trim(),$("password").value)}catch(err){msg($("loginMsg"),friendly(err))}});
-$("logoutBtn").onclick=()=>signOut(auth);$("employeesLogoutBtn").onclick=()=>signOut(auth);$("materialsLogoutBtn").onclick=()=>signOut(auth);$("employeeLogoutBtn").onclick=()=>signOut(auth);
+$("logoutBtn").onclick=()=>signOut(auth);
+$("employeesLogoutBtn").onclick=()=>signOut(auth);
+$("materialsLogoutBtn").onclick=()=>signOut(auth);
+$("employeeLogoutBtn").onclick=()=>signOut(auth);
+$("employeeHomeBtn").onclick=async()=>{employeeFolderId=null;$("employeeMaterialSearch").value="";await loadEmployeeSections()};
+$("employeeBackBtn").onclick=async()=>{
+  try{
+    if(!employeeFolderId){
+      return;
+    }
+    const sections=await readSections();
+    const current=getFolderById(sections,employeeFolderId);
+    employeeFolderId=current?normalizedParent(current):null;
+    $("employeeMaterialSearch").value="";
+    await loadEmployeeSections();
+  }catch(e){
+    employeeFolderId=null;
+    await loadEmployeeSections();
+  }
+};
 if($("addBtn"))$("addBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("addEmployeeFromListBtn").onclick=()=>{$("modal").classList.remove("hidden");msg($("formMsg"),"")};$("closeModal").onclick=()=>$("modal").classList.add("hidden");
 $("backToAdminFromEmployeesBtn").onclick=()=>show("adminView");
 $("backToAdminBtn").onclick=async()=>{
@@ -324,6 +358,21 @@ async function loadMaterialCounters(){
     if($("countArchive"))$("countArchive").textContent="0";
   }
 }
+async function loadEmployeeMaterialsUpdatedAt(){
+  try{
+    const items=await readMaterials();
+    const visible=items.filter(x=>x.archived!==true);
+    const latest=visible.map(x=>x.updatedAt||x.createdAt).filter(Boolean).sort((a,b)=>{
+      const ta=a?.toDate?a.toDate().getTime():new Date(a).getTime();
+      const tb=b?.toDate?b.toDate().getTime():new Date(b).getTime();
+      return tb-ta;
+    })[0];
+    if($("employeeMaterialsUpdatedAt"))$("employeeMaterialsUpdatedAt").textContent=latest?formatDate(latest):"—";
+  }catch{
+    if($("employeeMaterialsUpdatedAt"))$("employeeMaterialsUpdatedAt").textContent="—";
+  }
+}
+
 async function loadMaterialsUpdatedAt(){
   try{
     const items=await readMaterials();
@@ -716,6 +765,7 @@ async function loadSections(createDefaults=false){
 
 async function loadEmployeeSections(){
   try{
+    await loadEmployeeMaterialsUpdatedAt();
     const sections=await readSections();if(employeeFolderId&&!getFolderById(sections,employeeFolderId))employeeFolderId=null;
     const query=$("employeeMaterialSearch").value.trim().toLocaleLowerCase("ru");
     const items=await readMaterials();
@@ -827,6 +877,7 @@ onAuthStateChanged(auth,async user=>{
       employeeFolderId=null;
       show("employeeView");
       await loadEmployeeSections();
+      await loadEmployeeMaterialsUpdatedAt();
     }
   }catch(e){
     console.error(e);
