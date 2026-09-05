@@ -685,10 +685,8 @@ onAuthStateChanged(auth,async user=>{
   try{
     const admin=await isAdmin(user.uid);
     if(admin){
-      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();await loadMaterialsUpdatedAt();await loadMaterialCounters();
-      try{const sections=await readSections();$("countSections").textContent=getChildren(sections,null).length}catch(e){$("countSections").textContent="—"}
-    }
-    else{const p=await getDoc(doc(db,"users",user.uid));currentEmployeePosition=p.exists()?(p.data().position||""):"";$("employeeHello").textContent=p.exists()?`${p.data().name||user.email} · ${currentEmployeePosition}`:(user.email||"");employeeFolderId=null;show("employeeView");await loadEmployeeSections()}
+      $("adminEmail").textContent=user.email||"";show("adminView");await loadEmployees();await loadMaterialsUpdatedAt();await loadMaterialCounters();await loadMaterialCounters();
+      try{const sections=await readSections();currentEmployeePosition=p.exists()?(p.data().position||""):"";$("employeeHello").textContent=p.exists()?`${p.data().name||user.email} · ${currentEmployeePosition}`:(user.email||"");employeeFolderId=null;show("employeeView");await loadEmployeeSections()}
   }catch(e){msg($("loginMsg"),friendly(e));await signOut(auth);show("loginView")}
 });
 </script>
