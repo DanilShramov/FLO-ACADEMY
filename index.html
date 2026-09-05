@@ -345,7 +345,12 @@ function materialPath(sections,m){
 }
 
 async function openMaterialSecure(materialId){
+  const tab=window.open("about:blank","_blank");
   try{
+    if(tab){
+      tab.document.write('<!doctype html><html><head><meta charset="utf-8"><title>FLO Academy</title></head><body style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;padding:24px">Загрузка материала...</body></html>');
+      tab.document.close();
+    }
     const token=await auth.currentUser.getIdToken();
     const r=await fetch(`/api/material-file?id=${encodeURIComponent(materialId)}`,{headers:{Authorization:`Bearer ${token}`}});
     if(!r.ok){
@@ -354,9 +359,11 @@ async function openMaterialSecure(materialId){
     }
     const blob=await r.blob();
     const url=URL.createObjectURL(blob);
-    window.open(url,"_blank");
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(tab) tab.location.href=url;
+    else window.location.href=url;
+    setTimeout(()=>URL.revokeObjectURL(url),120000);
   }catch(e){
+    if(tab&&!tab.closed)tab.close();
     alert("Не удалось открыть материал: "+(e?.message||"ошибка"));
   }
 }
@@ -444,7 +451,7 @@ async function loadSections(createDefaults=false){
       children=refreshed.filter(s=>!s.isArchive&&searchHaystackFolder(s).includes(query));
       visibleMaterials=allMaterials.filter(m=>m.archived!==true&&searchHaystackMaterial(m).includes(query));
     }
-    $("countSections").textContent=roots.length;
+    $("countSections").textContent=roots.filter(s=>!s.isArchive).length;
     renderAdminBreadcrumb(refreshed);
     $("createFolderTitle").textContent=archiveMode?"Архив":(currentFolderId?"Создать папку":"Создать раздел");
     $("createFolderSub").textContent="";
