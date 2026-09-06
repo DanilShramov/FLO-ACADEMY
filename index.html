@@ -34,6 +34,21 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
   .employeeNav button{width:100%!important;min-width:0!important;padding:11px 4px!important;font-size:12.5px!important;white-space:nowrap!important}
 }
 
+
+/* FLO Academy 1.17 — warm editorial palette, compact working surfaces. */
+:root{--bg:#f4f2ed;--text:#263b38;--muted:#687570;--line:#dedfd8;--dark:#23483f}
+body{font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;padding:40px 24px 64px}.card{padding:36px;border-radius:24px;border-color:#e1e4db;box-shadow:0 16px 50px #203b3210}
+#loginView{max-width:560px;margin:5vh auto}.logo{white-space:nowrap}.tag{font-size:10px}h1{font-size:32px;letter-spacing:-.6px}h2{font-size:25px}.sub{color:var(--muted)}
+button,input,select{font-family:inherit}button{min-height:44px;touch-action:manipulation;transition:background .15s,border-color .15s}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #779b86;outline-offset:3px}input,select{background:#fcfcfa}input:focus,select:focus{border-color:#6c917e}
+.primary:hover{background:#315d50}.secondary{background:#edf0e9;color:#355247}.secondary:hover{background:#e0e7dc}.danger{background:#faeeeb;color:#953f36}.small{font-size:13px;padding:10px 12px}.actions{align-items:center}
+.row,.materialRow{padding:18px 0;gap:20px}.folderOpen{min-width:0}.sectionInfo,.sectionInfo>div:last-child{min-width:0}.name{overflow-wrap:anywhere}.folderActions{flex-shrink:0}.sectionIcon{background:#edf0e4;color:#536446;border:1px solid #dfe5d5}.accessTag{background:#f0f2ec}.miniTree span{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.materialRow{background:#f0f4f6;border:1px solid #dce5e9;border-radius:14px;margin:10px 0;padding:16px}.materialRow>div{min-width:0}.materialRow .folderOpen{color:#375368}.tile{border-radius:16px;padding:22px}.grid{gap:14px}.employeeNav{max-width:380px}.employeeFolder{border-left:3px solid #9cae80}.employeeMaterial{border-left:3px solid #779aaa}.tile b{font-size:23px}.tile span{font-size:14px}
+.homeGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 0}.homeTile{display:flex;flex-direction:column;gap:20px;text-align:left;min-height:230px;background:#e9eddf;border:1px solid #d5ddc9;color:#304534;padding:28px;border-radius:18px}.homeTile b{font:36px Georgia,serif}.homeTile>span:last-child{display:flex;justify-content:space-between;gap:16px;width:100%;font-size:14px}.homeTile:hover{background:#e0e6d2}.homeTile.materialsTile{background:#244a40;color:#fff;border-color:#244a40}.materialsTile:hover{background:#315e51}.tileEyebrow{text-transform:uppercase;letter-spacing:1.5px;font-size:11px;opacity:.8}.emptyTeam{padding:50px 24px;border:1px dashed #c7d1c2;border-radius:18px;text-align:center}.emptyTeam p{color:var(--muted)}
+.updatedLine{margin-bottom:4px;font-size:13px}.versionLine{font-size:12px;color:#738078;margin-bottom:20px}.modal{z-index:30;background:#142d2566;overscroll-behavior:contain}.modalbox{box-shadow:0 24px 80px #10271f33;padding:28px}.modalbox label:not(.checkItem){display:block;font-size:14px;font-weight:600;margin:20px 0 4px}.archiveAction{width:100%;margin-top:10px}.notice{color:#53635b}.error{color:#8a3030}
+@media(max-width:600px){.wrap{padding:12px 12px calc(24px + env(safe-area-inset-bottom))}.card{padding:24px 18px;border-radius:20px}.logo{font-size:clamp(25px,7.5vw,38px);letter-spacing:5px}.academyLogo span{letter-spacing:4px;margin-left:0}.tag{letter-spacing:1px;font-size:9px}.rule{margin:22px 0}.top{gap:16px}.employeeNav{max-width:none}.employeeNav button{font-size:13px!important;min-height:44px}.row,.materialRow{flex-direction:column;align-items:stretch;gap:14px}.folderActions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:6px}.folderActions button{padding:10px 4px;font-size:12px}.homeGrid{grid-template-columns:1fr;gap:12px}.homeTile{min-height:178px;padding:24px;gap:16px}.homeTile b{font-size:32px}.modal{padding:10px}.modalbox{padding:22px;max-height:calc(100dvh - 20px)}.modalChecks{grid-template-columns:1fr}.adminBottomActions button{min-width:100%}.miniTree{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
 </style>
 </head>
 <body>
@@ -65,6 +80,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
     <div class="adminBottom">
       <button id="openArchiveBtn" class="tile tileButton archiveTile" style="margin-bottom:18px"><b><span id="countArchive">0</span> · Архив</b><span>Хранить, восстановить или удалить материалы →</span></button>
       <div class="updatedLine">Материалы обновлены: <b id="materialsUpdatedAt">—</b></div>
+      <div class="versionLine" data-app-version></div>
       <div class="adminBottomTitle">Структура и резервная копия</div>
       <div class="adminBottomActions">
         <button id="exportStructureBtn" class="secondary">Экспорт структуры</button>
@@ -125,7 +141,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
         <div class="brand" style="text-align:left">
           <div class="logo" style="font-size:31px;margin:0;letter-spacing:6px">FLO <span style="font-size:1em;letter-spacing:6px">ACADEMY</span></div>
         </div>
-        <h1 style="margin-top:18px">Обучение</h1>
+        <h1 id="employeePageTitle" style="margin-top:18px">Главная</h1>
         <div id="employeeHello" class="sub"></div>
       </div>
       <div class="actions employeeNav">
@@ -135,11 +151,13 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
       </div>
     </div>
     <div class="rule"></div>
-    <div class="searchBox"><input id="employeeMaterialSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
+    <div id="employeeHomePanel" class="homeGrid"><button id="employeeTeamTile" class="homeTile"><span class="tileEyebrow">Люди FLO</span><b>Команда</b><span>Наши люди и общая работа <span aria-hidden="true">↗</span></span></button><button id="employeeMaterialsTile" class="homeTile materialsTile"><span class="tileEyebrow">База знаний</span><b>Материалы</b><span>Обучение и стандарты <span aria-hidden="true">↗</span></span></button></div>
+    <div id="employeeTeamPanel" class="hidden emptyTeam"><h2>Команда FLO</h2><p>Раздел будет наполнен позже.</p></div>
+    <div id="employeeLibraryPanel" class="hidden"><div class="searchBox"><input id="employeeMaterialSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
     <div id="employeeBreadcrumb" class="breadcrumbs"></div>
-    <div id="employeeSections" class="grid"></div>
+    <div id="employeeSections" class="grid"></div></div>
     <div class="adminBottom" style="margin-top:24px">
-      <div class="updatedLine">Материалы обновлены: <b id="employeeMaterialsUpdatedAt">—</b></div>
+      <div class="updatedLine">Материалы обновлены: <b id="employeeMaterialsUpdatedAt">—</b></div><div class="versionLine" data-app-version></div>
     </div>
   </section>
 </div>
@@ -169,10 +187,17 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
   </div>
 </div>
 
+<div id="folderEditModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="folderEditTitle">
+<div class="modalbox"><div class="top"><h2 id="folderEditTitle">Редактировать папку</h2><button id="closeFolderEdit" type="button" class="secondary small">Закрыть</button></div>
+<form id="folderEditForm"><label for="editFolderName">Название</label><input id="editFolderName" maxlength="60" required>
+<label for="editFolderParent">Родительская папка</label><select id="editFolderParent"></select><p class="meta">Папка переместится вместе со всем содержимым. Максимум — 10 уровней.</p>
+<label>Порядок на текущем уровне</label><div class="actions"><button id="folderUpBtn" type="button" class="secondary">↑ Вверх</button><button id="folderDownBtn" type="button" class="secondary">↓ Вниз</button></div><p id="folderOrderHint" class="meta"></p>
+<button type="submit" class="primary">Сохранить изменения</button><button id="folderArchiveBtn" type="button" class="secondary archiveAction">В архив</button><div id="folderEditMsg" aria-live="polite"></div></form></div></div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc as firestoreSetDoc, collection, getDocs, deleteDoc as firestoreDeleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A",
@@ -197,8 +222,24 @@ let currentEmployeePosition="";
 let accessEditingFolderId=null;
 let employeeSectionsCache=null;
 let employeeMaterialsCache=null;
-let employeeCacheLoadedAt=0;
-const EMPLOYEE_CACHE_TTL=60000;
+// Release number changes only when a new build is issued, never on page reload.
+const APP_VERSION="1.17";
+document.querySelectorAll("[data-app-version]").forEach(el=>el.textContent="Версия "+APP_VERSION);
+const libraryCache=new Map();
+let cacheGeneration=0;
+function invalidateLibrary(){cacheGeneration++;libraryCache.clear();employeeSectionsCache=null;employeeMaterialsCache=null;}
+async function setDoc(ref,...args){try{return await firestoreSetDoc(ref,...args)}finally{if(/^material(Sections|Items)\//.test(ref.path))invalidateLibrary()}}
+async function deleteDoc(ref){try{return await firestoreDeleteDoc(ref)}finally{if(/^material(Sections|Items)\//.test(ref.path))invalidateLibrary()}}
+function readLibraryCollection(name){
+  if(libraryCache.has(name))return libraryCache.get(name);
+  const generation=cacheGeneration;
+  const request=getDocs(collection(db,name)).then(snap=>{
+    const rows=[];snap.forEach(d=>rows.push({...d.data(),id:d.id}));
+    return rows.sort((a,b)=>(a.order??999)-(b.order??999)||(a.name||"").localeCompare(b.name||"","ru"));
+  }).catch(e=>{if(cacheGeneration===generation)libraryCache.delete(name);throw e});
+  libraryCache.set(name,request);return request;
+}
+function debounce(fn,delay=140){let timer;return (...args)=>{clearTimeout(timer);timer=setTimeout(()=>Promise.resolve(fn(...args)).catch(e=>console.error(e)),delay)}}
 
 function show(id){["loginView","adminView","employeesView","materialsView","employeeView"].forEach(x=>$(x).classList.add("hidden"));$(id).classList.remove("hidden")}
 function msg(el,text,type="error"){el.innerHTML=text?`<div class="notice ${type}">${escapeHtml(text)}</div>`:""}
@@ -241,10 +282,22 @@ $("logoutBtn").onclick=()=>signOut(auth);
 $("employeesLogoutBtn").onclick=()=>signOut(auth);
 $("materialsLogoutBtn").onclick=()=>signOut(auth);
 $("employeeLogoutBtn").onclick=()=>signOut(auth);
-$("employeeHomeBtn").onclick=async()=>{employeeFolderId=null;$("employeeMaterialSearch").value="";await loadEmployeeSections()};
+let employeePage="home";
+function showEmployeePage(page){
+  employeePage=page;employeeFolderId=null;$("employeeMaterialSearch").value="";
+  $("employeeHomePanel").classList.toggle("hidden",page!=="home");
+  $("employeeTeamPanel").classList.toggle("hidden",page!=="team");
+  $("employeeLibraryPanel").classList.toggle("hidden",page!=="materials");
+  $("employeePageTitle").textContent=page==="home"?"Главная":page==="team"?"Команда":"Материалы";
+  $("employeeBackBtn").disabled=page==="home";
+  if(page==="materials")loadEmployeeSections();
+}
+$("employeeTeamTile").onclick=()=>showEmployeePage("team");
+$("employeeMaterialsTile").onclick=()=>showEmployeePage("materials");
+$("employeeHomeBtn").onclick=()=>showEmployeePage("home");
 $("employeeBackBtn").onclick=async()=>{
   try{
-    if(!employeeFolderId)return;
+    if(employeePage!=="materials"||!employeeFolderId){showEmployeePage("home");return;}
     const {sections}=await getEmployeeLibrary();
     const current=getFolderById(sections,employeeFolderId);
     employeeFolderId=current?normalizedParent(current):null;
@@ -275,10 +328,10 @@ $("backToAdminBtn").onclick=async()=>{
 
     // Если внутри архивной папки — назад к архивной родительской,
     // а если архивного родителя нет — к корню Архива.
-    if(current?.archived){
+    if(isFolderArchived(sections,current)){
       const parentId=normalizedParent(current);
       const parent=parentId?getFolderById(sections,parentId):null;
-      if(parent?.archived){
+      if(parent&&isFolderArchived(sections,parent)){
         currentFolderId=parent.id;
       }else{
         const archive=sections.find(s=>s.isArchive===true);
@@ -308,15 +361,15 @@ $("openEmployeesBtn").onclick=async()=>{show("employeesView");await loadEmployee
 $("openMaterialsBtn").onclick=async()=>{currentFolderId=null;show("materialsView");await loadSections(true)};
 $("openTestsBtn").onclick=()=>alert("Раздел тестов добавим следующим этапом.");
 $("openArchiveBtn").onclick=async()=>{show("materialsView");const sections=await ensureDefaultSections();const archive=await ensureArchiveFolder(sections);currentFolderId=archive.id;await loadSections()};
-$("adminGlobalSearch").addEventListener("input",runAdminGlobalSearch);
+$("adminGlobalSearch").addEventListener("input",debounce(runAdminGlobalSearch));
 $("closeAccessModal").onclick=()=>$("accessModal").classList.add("hidden");
-$("adminMaterialSearch").addEventListener("input",()=>loadSections());
+$("adminMaterialSearch").addEventListener("input",debounce(()=>loadSections()));
 $("addMaterialBtn").onclick=()=>{
   if(!currentFolderId){msg($("materialUploadMsg"),"Сначала откройте папку, в которую нужно добавить материал.");return}
   $("materialFileInput").click();
 };
 $("materialFileInput").addEventListener("change",uploadSelectedMaterial);
-$("employeeMaterialSearch").addEventListener("input",()=>loadEmployeeSections());
+$("employeeMaterialSearch").addEventListener("input",debounce(()=>loadEmployeeSections()));
 $("exportStructureBtn").onclick=exportStructure;
 $("importStructureBtn").onclick=()=>$("importStructureInput").click();
 $("importStructureInput").addEventListener("change",importStructureFromFile);
@@ -340,20 +393,8 @@ async function loadEmployees(){
   });
 }
 
-async function readSections(){
-  const snap=await getDocs(collection(db,"materialSections"));const sections=[];snap.forEach(d=>sections.push({id:d.id,...d.data()}));
-  return sections.sort((a,b)=>(a.order??999)-(b.order??999)||(a.name||"").localeCompare(b.name||"","ru"));
-}
-
-async function readMaterials(){
-  try{
-    const snap=await getDocs(collection(db,"materialItems"));const items=[];snap.forEach(d=>items.push({id:d.id,...d.data()}));
-    return items.sort((a,b)=>(a.order??999)-(b.order??999)||(a.name||"").localeCompare(b.name||"","ru"));
-  }catch(e){
-    if((e?.code||"").includes("permission-denied"))return [];
-    throw e;
-  }
-}
+async function readSections(){return readLibraryCollection("materialSections")}
+async function readMaterials(){return readLibraryCollection("materialItems")}
 async function ensureArchiveFolder(sections=null){
   const all=sections||await readSections();let archive=all.find(s=>s.isArchive===true);
   if(archive)return archive;
@@ -424,7 +465,7 @@ function getFolderPath(sections,id){
 function renderAdminBreadcrumb(sections){
   const current=getFolderById(sections,currentFolderId);
   const archive=sections.find(s=>s.isArchive===true);
-  if(current?.archived){
+  if(isFolderArchived(sections,current)){
     const path=[];
     let node=current;
     const seen=new Set();
@@ -432,7 +473,7 @@ function renderAdminBreadcrumb(sections){
       seen.add(node.id);path.unshift(node);
       const pid=normalizedParent(node);
       const p=pid?getFolderById(sections,pid):null;
-      if(!p||!p.archived)break;
+      if(!p||!isFolderArchived(sections,p))break;
       node=p;
     }
     $("sectionBreadcrumb").innerHTML=`<button class="crumb" data-id="">Материалы</button><span>›</span><button class="crumb" data-id="${archive?.id||""}">Архив</button>${path.map((x,i)=>`<span>›</span><button class="crumb ${i===path.length-1?"crumbCurrent":""}" data-id="${x.id}">${escapeHtml(x.name||"Папка")}</button>`).join("")}`;
@@ -469,17 +510,110 @@ $("saveAccessBtn").onclick=async()=>{
   }catch(e){msg($("accessMsg"),friendly(e))}
 };
 
-async function moveSection(sectionId,direction,sections){
-  const item=getFolderById(sections,sectionId);if(!item)return;
-  const siblings=getChildren(sections,normalizedParent(item)).filter(s=>!s.isArchive).sort((a,b)=>(a.order??999)-(b.order??999));
-  const idx=siblings.findIndex(s=>s.id===sectionId),next=idx+direction;if(idx<0||next<0||next>=siblings.length)return;
-  const other=siblings[next],a=item.order??idx,b=other.order??next;
-  await Promise.all([
-    setDoc(doc(db,"materialSections",item.id),{order:b},{merge:true}),
-    setDoc(doc(db,"materialSections",other.id),{order:a},{merge:true})
-  ]);
-  await loadSections();
+
+let editingFolderId=null, folderEditorBusy=false;
+function subtreeDepths(sections,id){
+  const result=new Map(),queue=[[id,0]];
+  for(let i=0;i<queue.length;i++){
+    const [node,depth]=queue[i];
+    if(result.has(node))throw new Error("В структуре найден цикл. Перемещение отменено.");
+    result.set(node,depth);
+    getChildren(sections,node).forEach(child=>queue.push([child.id,depth+1]));
+  }
+  return result;
 }
+function actualDepth(sections,id){
+  let depth=0;const seen=new Set();
+  while(id){
+    if(seen.has(id))throw new Error("В структуре найден цикл.");
+    seen.add(id);const folder=getFolderById(sections,id);
+    if(!folder)throw new Error("Родительская папка не найдена.");
+    depth++;id=normalizedParent(folder);
+  }
+  return depth;
+}
+function folderMovePlan(sections,id,parentId,name,allowCurrentArchivedParent=false){
+  const item=getFolderById(sections,id);if(!item||item.isArchive)throw new Error("Папка недоступна.");
+  const subtree=subtreeDepths(sections,id);
+  if(subtree.has(parentId))throw new Error("Нельзя переместить папку в себя или её подпапку.");
+  const parent=getFolderById(sections,parentId);
+  if(parentId&&(!parent||parent.isArchive||(isFolderArchived(sections,parent)&&!(allowCurrentArchivedParent&&parentId===normalizedParent(item)))))throw new Error("Выберите действующую родительскую папку.");
+  const depth=actualDepth(sections,parentId)+1;
+  if(depth+Math.max(...subtree.values())>MAX_FOLDER_DEPTH)throw new Error("Поддерево превысит 10 уровней вложенности.");
+  const siblings=getChildren(sections,parentId).filter(x=>x.id!==id&&!x.isArchive);
+  if(parentId!==normalizedParent(item)&&siblings.length>=MAX_CHILD_FOLDERS)throw new Error("На выбранном уровне уже 10 папок.");
+  if(siblings.some(x=>(x.name||"").trim().toLocaleLowerCase("ru")===name.toLocaleLowerCase("ru")))throw new Error("На этом уровне уже есть папка с таким названием.");
+  return [...subtree].map(([node,relative])=>({id:node,depth:depth+relative}));
+}
+async function openFolderEditor(id){
+  try{
+    const sections=await readSections(),folder=getFolderById(sections,id);if(!folder)return;
+    editingFolderId=id;const subtree=subtreeDepths(sections,id);
+    $("editFolderName").value=folder.name||"";
+    $("editFolderParent").innerHTML='<option value="">Материалы · корень</option>'+sections.filter(x=>!x.isArchive&&!isFolderArchived(sections,x)&&!subtree.has(x.id)).map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(getFolderPath(sections,x.id).map(p=>p.name).join(" / "))}</option>`).join("");
+    const currentParent=getFolderById(sections,normalizedParent(folder));
+    if(currentParent&&isFolderArchived(sections,currentParent)){
+      $("editFolderParent").insertAdjacentHTML("beforeend",`<option value="${escapeHtml(currentParent.id)}">${escapeHtml(getFolderPath(sections,currentParent.id).map(x=>x.name).join(" / "))} · архив</option>`);
+    }
+    $("editFolderParent").value=normalizedParent(folder)||"";
+    const siblings=getChildren(sections,normalizedParent(folder)).filter(x=>!x.isArchive),index=siblings.findIndex(x=>x.id===id);
+    $("folderUpBtn").disabled=index<=0;$("folderDownBtn").disabled=index===siblings.length-1;
+    $("folderOrderHint").textContent=`Позиция ${index+1} из ${siblings.length} на текущем уровне`;
+    $("folderArchiveBtn").textContent=isFolderArchived(sections,folder)?"Восстановить":"В архив";
+    msg($("folderEditMsg"),"");$("folderEditModal").classList.remove("hidden");$("editFolderName").focus();
+  }catch(e){msg($("sectionMsg"),friendly(e))}
+}
+async function folderEditorAction(action){
+  if(folderEditorBusy)return;folderEditorBusy=true;
+  const controls=[...$("folderEditModal").querySelectorAll("button,input,select")];controls.forEach(x=>x.disabled=true);
+  try{await action()}catch(e){msg($("folderEditMsg"),friendly(e))}
+  finally{
+    folderEditorBusy=false;controls.forEach(x=>x.disabled=false);
+    if(!$("folderEditModal").classList.contains("hidden")){
+      const sections=await readSections(),item=getFolderById(sections,editingFolderId);
+      if(item){const siblings=getChildren(sections,normalizedParent(item)).filter(x=>!x.isArchive),index=siblings.findIndex(x=>x.id===item.id);$("folderUpBtn").disabled=index<=0;$("folderDownBtn").disabled=index>=siblings.length-1;}
+    }
+  }
+}
+async function saveFolderEditor(archiveAction=false){
+  const sections=await readSections(),item=getFolderById(sections,editingFolderId);if(!item)throw new Error("Папка больше не существует.");
+  const name=$("editFolderName").value.trim(),parentId=$("editFolderParent").value||null;
+  if(!name||name.length>60)throw new Error("Введите название длиной до 60 символов.");
+  const archived=isFolderArchived(sections,item);
+  if(archiveAction&&!archived&&!confirm(`Отправить папку «${name}» и её содержимое в архив?`))return;
+  const plan=folderMovePlan(sections,item.id,parentId,name,!archiveAction);
+  // A single atomic batch avoids partially moved subtrees.
+  if(plan.length>450)throw new Error("Слишком большое поддерево для одного безопасного перемещения. Переместите подпапки отдельно.");
+  const batch=writeBatch(db);
+  for(const node of plan){
+    const patch={depth:node.depth,updatedAt:serverTimestamp()};
+    if(node.id===item.id){
+      Object.assign(patch,{name,parentId});
+      if(parentId!==normalizedParent(item))patch.order=Date.now();
+      if(archiveAction)Object.assign(patch,{archived:!archived,archivedAt:archived?null:serverTimestamp(),previousParentId:parentId});
+    }
+    batch.set(doc(db,"materialSections",node.id),patch,{merge:true});
+  }
+  await batch.commit();invalidateLibrary();$("folderEditModal").classList.add("hidden");
+  await loadSections();msg($("sectionMsg"),"Изменения сохранены.","ok");
+}
+async function reorderFolder(direction){
+  const sections=await readSections(),item=getFolderById(sections,editingFolderId);
+  if(!item)return;
+  const siblings=getChildren(sections,normalizedParent(item)).filter(x=>!x.isArchive);
+  const index=siblings.findIndex(x=>x.id===item.id),next=index+direction;
+  if(next<0||next>=siblings.length)return;
+  [siblings[index],siblings[next]]=[siblings[next],siblings[index]];
+  const batch=writeBatch(db);siblings.forEach((x,order)=>batch.set(doc(db,"materialSections",x.id),{order,updatedAt:serverTimestamp()},{merge:true}));
+  await batch.commit();invalidateLibrary();await loadSections();
+  $("folderOrderHint").textContent=`Позиция ${next+1} из ${siblings.length} на текущем уровне`;
+}
+$("folderEditForm").onsubmit=e=>{e.preventDefault();folderEditorAction(()=>saveFolderEditor())};
+$("folderArchiveBtn").onclick=()=>folderEditorAction(()=>saveFolderEditor(true));
+$("folderUpBtn").onclick=()=>folderEditorAction(()=>reorderFolder(-1));
+$("folderDownBtn").onclick=()=>folderEditorAction(()=>reorderFolder(1));
+$("closeFolderEdit").onclick=()=>{if(!folderEditorBusy)$("folderEditModal").classList.add("hidden")};
+
 async function moveMaterial(materialId,direction,items){
   const item=items.find(x=>x.id===materialId);if(!item)return;
   const siblings=items.filter(x=>(x.folderId||null)===(item.folderId||null)).sort((a,b)=>(a.order??999)-(b.order??999));
@@ -543,17 +677,12 @@ async function openMaterialSecure(materialId){
         if(type.includes("pdf")){
           doc.body.innerHTML='<div id="pdfStatus" style="color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;padding:24px">Загрузка документа...</div>';
           const buffer=await blob.arrayBuffer();
-          const bytes=new Uint8Array(buffer);
-          let binary="";
-          for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
-          const base64=btoa(binary);
-
           const script=doc.createElement("script");
           script.src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
           script.onload=async()=>{
             try{
               tab.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
-              const data=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+              const data=new Uint8Array(buffer);
               const pdf=await tab.pdfjsLib.getDocument({data}).promise;
               doc.body.innerHTML="";
               doc.body.style.cssText="margin:0;background:#111;padding:10px;overflow:auto;-webkit-user-select:none;user-select:none";
@@ -566,7 +695,7 @@ async function openMaterialSecure(materialId){
                 const page=await pdf.getPage(n);
                 const baseViewport=page.getViewport({scale:1});
                 const maxWidth=Math.min(tab.innerWidth-20,1100);
-                const scale=Math.max(1,Math.min(2,maxWidth/baseViewport.width));
+                const scale=Math.min(2,(maxWidth/baseViewport.width)*Math.min(tab.devicePixelRatio||1,1.5));
                 const viewport=page.getViewport({scale});
                 const canvas=doc.createElement("canvas");
                 canvas.width=Math.floor(viewport.width);
@@ -588,7 +717,7 @@ async function openMaterialSecure(materialId){
           doc.body.appendChild(img);
         }
       }else{
-        window.location.href=url;
+        URL.revokeObjectURL(url);throw new Error("Разрешите открытие новой вкладки для просмотра материала.");
       }
       setTimeout(()=>URL.revokeObjectURL(url),120000);
     }else{
@@ -689,21 +818,21 @@ async function uploadSelectedMaterial(e){
 
 async function loadSections(createDefaults=false){
   try{
-    const sections=createDefaults?await ensureDefaultSections():await readSections();
+    const [sections,allMaterials]=await Promise.all([createDefaults?ensureDefaultSections():readSections(),readMaterials()]);
     await ensureArchiveFolder(sections);
     const refreshed=await readSections();
     if(currentFolderId&&!getFolderById(refreshed,currentFolderId))currentFolderId=null;
     const current=getFolderById(refreshed,currentFolderId);const currentDepth=current?normalizedDepth(current):0;
-    const archiveMode=!!current?.isArchive||!!current?.archived;
+    const archiveMode=!!current?.isArchive||isFolderArchived(refreshed,current);
     let children=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive&&!isFolderArchived(refreshed,s));
     const roots=getChildren(refreshed,null).filter(s=>!s.isArchive&&!isFolderArchived(refreshed,s));
     const query=$("adminMaterialSearch").value.trim().toLocaleLowerCase("ru");
-    const allMaterials=await readMaterials();
+
     let visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===(currentFolderId||null)&&m.archived!==true);
     if(current?.isArchive){
       visibleMaterials=allMaterials.filter(m=>m.archived===true);
       children=refreshed.filter(s=>s.archived===true&&!s.isArchive);
-    }else if(current?.archived){
+    }else if(isFolderArchived(refreshed,current)){
       visibleMaterials=allMaterials.filter(m=>(m.folderId||null)===currentFolderId);
       children=getChildren(refreshed,currentFolderId).filter(s=>!s.isArchive);
     }
@@ -727,48 +856,10 @@ async function loadSections(createDefaults=false){
       const kids=getChildren(refreshed,s.id).filter(x=>!x.isArchive);
       const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("")+(kids.length>4?`<span>└ ещё ${kids.length-4}…</span>`:"");
       const access=allowedPositions(s);const accessText=access.length?access.join(", "):"Все должности";
-      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions">${archiveMode?`<button class="secondary small restoreSection" data-id="${s.id}">Восстановить</button>`:`<button class="secondary small archiveSection" data-id="${s.id}">В архив</button><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small renameSection" data-id="${s.id}">Переименовать</button>`}<button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
+      return `<div class="row"><button class="folderOpen" data-id="${s.id}"><div class="sectionInfo"><div class="sectionIcon">${escapeHtml((s.name||"П").trim().charAt(0).toUpperCase())}</div><div><div class="folderNameRow"><div class="name">${escapeHtml(s.name||"Без названия")}</div><div>→</div></div>${preview?`<div class="miniTree">${preview}</div>`:""}<div class="accessTag">${escapeHtml(accessText)}</div>${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(refreshed,s.id).map(x=>x.name).join(" / "))}</div>`:""}</div></div></button><div class="folderActions"><button class="secondary small accessSection" data-id="${s.id}">Доступ</button><button class="secondary small editSection" data-id="${s.id}">Редактировать</button><button class="danger small deleteSection" data-id="${s.id}">Удалить</button></div></div>`}).join(""):`<div class="notice">${query?"Ничего не найдено.":"На этом уровне папок пока нет."}</div>`;
     document.querySelectorAll(".folderOpen").forEach(b=>b.onclick=async()=>{currentFolderId=b.dataset.id;$("adminMaterialSearch").value="";msg($("sectionMsg"),"");await loadSections()});
     document.querySelectorAll(".accessSection").forEach(b=>b.onclick=()=>{const item=getFolderById(refreshed,b.dataset.id);if(item)openAccessModal(item)});
-    document.querySelectorAll(".archiveSection").forEach(b=>b.onclick=async()=>{
-      const item=getFolderById(refreshed,b.dataset.id);if(!item)return;
-      if(!confirm(`Переместить папку «${item.name||"Папка"}» в архив вместе со всем её содержимым?`))return;
-      try{
-        await setDoc(doc(db,"materialSections",item.id),{
-          archived:true,
-          archivedAt:serverTimestamp(),
-          previousParentId:normalizedParent(item),
-          updatedAt:serverTimestamp()
-        },{merge:true});
-        msg($("sectionMsg"),"Папка перемещена в архив.","ok");
-        await loadSections();
-      }catch(e){msg($("sectionMsg"),friendly(e))}
-    });
-    document.querySelectorAll(".restoreSection").forEach(b=>b.onclick=async()=>{
-      const item=getFolderById(refreshed,b.dataset.id);if(!item)return;
-      try{
-        let restoreParentId=item.previousParentId||null;
-        if(restoreParentId){
-          const parent=getFolderById(refreshed,restoreParentId);
-          if(!parent||isFolderArchived(refreshed,parent))restoreParentId=null;
-        }
-        const parentDepth=restoreParentId?normalizedDepth(getFolderById(refreshed,restoreParentId)):0;
-        await setDoc(doc(db,"materialSections",item.id),{
-          archived:false,
-          archivedAt:null,
-          parentId:restoreParentId,
-          depth:parentDepth+1,
-          updatedAt:serverTimestamp()
-        },{merge:true});
-        msg($("sectionMsg"),"Папка восстановлена.","ok");
-        await loadSections();
-      }catch(e){msg($("sectionMsg"),friendly(e))}
-    });
-    document.querySelectorAll(".renameSection").forEach(button=>button.onclick=async()=>{
-      const item=getFolderById(refreshed,button.dataset.id);if(!item)return;const next=prompt("Новое название папки:",item.name||"");if(next===null)return;const name=next.trim();if(!name)return;
-      const siblings=getChildren(refreshed,normalizedParent(item));if(siblings.some(s=>s.id!==item.id&&(s.name||"").trim().toLocaleLowerCase("ru")===name.toLocaleLowerCase("ru"))){msg($("sectionMsg"),"На этом уровне уже есть папка с таким названием.");return}
-      try{await setDoc(doc(db,"materialSections",item.id),{name,updatedAt:serverTimestamp()},{merge:true});msg($("sectionMsg"),"Название изменено.","ok");await loadSections()}catch(e){msg($("sectionMsg"),friendly(e))}
-    });
+    document.querySelectorAll(".editSection").forEach(b=>b.onclick=()=>openFolderEditor(b.dataset.id));
     document.querySelectorAll(".deleteSection").forEach(button=>button.onclick=async()=>{
       const item=getFolderById(refreshed,button.dataset.id);if(!item)return;const childCount=getChildren(refreshed,item.id).length;const materialCount=allMaterials.filter(m=>(m.folderId||null)===item.id).length;
       if(childCount||materialCount){msg($("sectionMsg"),`Сначала удалите содержимое папки «${item.name}».`);return}
@@ -830,13 +921,9 @@ async function loadSections(createDefaults=false){
 }
 
 
-async function getEmployeeLibrary(force=false){
-  const fresh=employeeSectionsCache&&employeeMaterialsCache&&(Date.now()-employeeCacheLoadedAt<EMPLOYEE_CACHE_TTL);
-  if(!force&&fresh)return {sections:employeeSectionsCache,items:employeeMaterialsCache};
+async function getEmployeeLibrary(){
   const [sections,items]=await Promise.all([readSections(),readMaterials()]);
-  employeeSectionsCache=sections;
-  employeeMaterialsCache=items;
-  employeeCacheLoadedAt=Date.now();
+  employeeSectionsCache=sections;employeeMaterialsCache=items;
   return {sections,items};
 }
 
@@ -926,7 +1013,20 @@ $("employeeForm").addEventListener("submit",async e=>{
   }catch(err){msg($("formMsg"),friendly(err))}
 });
 
+document.querySelectorAll("input[placeholder]").forEach(el=>{if(!el.labels?.length)el.setAttribute("aria-label",el.placeholder)});
+document.querySelectorAll(".modal").forEach(el=>{el.setAttribute("role","dialog");el.setAttribute("aria-modal","true")});
+document.addEventListener("keydown",e=>{
+ const modal=[...document.querySelectorAll(".modal:not(.hidden)")].pop();if(!modal)return;
+ if(e.key==="Escape"&&!folderEditorBusy){modal.classList.add("hidden");return;}
+ if(e.key!=="Tab")return;
+ const controls=[...modal.querySelectorAll("button:not(:disabled),input:not(:disabled),select:not(:disabled)")];
+ if(!controls.length)return;const first=controls[0],last=controls.at(-1);
+ if(e.shiftKey&&(document.activeElement===first||!modal.contains(document.activeElement))){e.preventDefault();last.focus()}
+ else if(!e.shiftKey&&(document.activeElement===last||!modal.contains(document.activeElement))){e.preventDefault();first.focus()}
+});
 onAuthStateChanged(auth,async user=>{
+  invalidateLibrary();
+  document.querySelectorAll(".modal").forEach(el=>el.classList.add("hidden"));
   if(!user){
     currentFolderId=null;
     employeeFolderId=null;
@@ -941,9 +1041,7 @@ onAuthStateChanged(auth,async user=>{
     if(admin){
       $("adminEmail").textContent=user.email||"";
       show("adminView");
-      await loadEmployees();
-      await loadMaterialsUpdatedAt();
-      await loadMaterialCounters();
+      await Promise.all([loadEmployees(),readSections(),loadMaterialsUpdatedAt(),loadMaterialCounters()]);
     }else{
       const p=await getDoc(doc(db,"users",user.uid));
       currentEmployeePosition=p.exists()?(p.data().position||""):"";
@@ -953,8 +1051,8 @@ onAuthStateChanged(auth,async user=>{
       employeeFolderId=null;
       employeeSectionsCache=null;
       employeeMaterialsCache=null;
-      employeeCacheLoadedAt=0;
-      show("employeeView");
+
+      show("employeeView");showEmployeePage("home");
       const library=await getEmployeeLibrary(true);
       await loadEmployeeSections();
       await loadEmployeeMaterialsUpdatedAt(library.items);
