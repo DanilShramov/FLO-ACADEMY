@@ -21,6 +21,19 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
 .inlineForm{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.inlineForm input{margin:0}.inlineForm .primary{width:auto;margin:0;white-space:nowrap}.sectionIcon{width:42px;height:42px;border-radius:12px;background:#eeece7;display:grid;place-items:center;font:20px Georgia,serif;flex:0 0 auto}.sectionInfo{display:flex;align-items:center;gap:12px}
 .folderOpen{background:transparent;padding:0;text-align:left;color:inherit}.folderOpen:hover .name{text-decoration:underline}.breadcrumbs{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:0 0 20px}.crumb{background:transparent;padding:4px 2px;color:#61666b}.crumb:hover{text-decoration:underline}.crumbCurrent{font-weight:650;color:var(--text)}.levelBadge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eeece7;color:#666;font-size:12px;margin-left:8px}.folderActions{display:flex;gap:7px;flex-wrap:wrap}.limitHint{font-size:12px;color:#777;margin-top:8px}.sectionHeader{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.academyLogo span{font-size:1em;letter-spacing:8px;vertical-align:baseline;margin-left:8px}.miniTree{margin-top:7px;font-size:12px;color:#777;line-height:1.5}.miniTree span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}.folderNameRow{display:flex;align-items:center;gap:6px}.searchBox{margin:0 0 18px}.searchBox input{margin:0}.adminBottom{margin-top:30px;padding-top:22px;border-top:1px solid var(--line)}.adminBottomTitle{font:18px Georgia,serif;margin-bottom:12px}.adminBottomActions{display:flex;gap:8px;flex-wrap:wrap}.adminBottomActions button{flex:1;min-width:150px}.updatedLine{font-size:13px;color:#666;margin-bottom:14px}.accessTag{display:inline-block;font-size:11px;padding:3px 7px;border-radius:999px;background:#eeece7;color:#666;margin-top:6px}.sortBtns{display:flex;gap:5px}.sortBtns button{padding:8px 10px}.archiveTile b{font-size:18px}.materialRow{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid #eeeae3;padding:14px 2px}.materialRow:first-child{border-top:0}.modalChecks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.checkItem{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:11px}.checkItem input{width:auto;margin:0}.searchResultPath{font-size:12px;color:#777;margin-top:3px}.toolsMsg{margin-top:10px}
 @media(max-width:600px){.wrap{padding:16px 12px 40px}.card{padding:25px 20px;border-radius:22px}.logo{font-size:44px}.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.actions{width:100%}.actions button{flex:1}.inlineForm{grid-template-columns:1fr}.inlineForm .primary{width:100%}.row{align-items:flex-start;flex-direction:column}.folderActions{width:100%}.folderActions button{flex:1}}
+
+.employeeNav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.employeeNav button{width:100%;min-width:0;white-space:nowrap;padding:12px 7px;font-size:14px}
+.employeeFolder{background:#faf9f6!important}
+.employeeMaterial{background:#e9eef1!important;border-color:#d4dce1!important}
+.employeeMaterial:hover{background:#e1e8ec!important}
+.employeeMaterial b,.employeeFolder b{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.employeeMaterial span{color:#69747c!important}
+@media(max-width:600px){
+  .employeeNav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;width:100%!important}
+  .employeeNav button{width:100%!important;min-width:0!important;padding:11px 4px!important;font-size:12.5px!important;white-space:nowrap!important}
+}
+
 </style>
 </head>
 <body>
@@ -115,7 +128,7 @@ button{border:0;border-radius:13px;padding:14px 18px;font-size:15px;cursor:point
         <h1 style="margin-top:18px">Обучение</h1>
         <div id="employeeHello" class="sub"></div>
       </div>
-      <div class="actions">
+      <div class="actions employeeNav">
         <button id="employeeBackBtn" class="secondary">← Назад</button>
         <button id="employeeHomeBtn" class="secondary">На главную</button>
         <button id="employeeLogoutBtn" class="secondary">Выйти</button>
@@ -182,6 +195,10 @@ let currentFolderId=null;
 let employeeFolderId=null;
 let currentEmployeePosition="";
 let accessEditingFolderId=null;
+let employeeSectionsCache=null;
+let employeeMaterialsCache=null;
+let employeeCacheLoadedAt=0;
+const EMPLOYEE_CACHE_TTL=60000;
 
 function show(id){["loginView","adminView","employeesView","materialsView","employeeView"].forEach(x=>$(x).classList.add("hidden"));$(id).classList.remove("hidden")}
 function msg(el,text,type="error"){el.innerHTML=text?`<div class="notice ${type}">${escapeHtml(text)}</div>`:""}
@@ -227,10 +244,8 @@ $("employeeLogoutBtn").onclick=()=>signOut(auth);
 $("employeeHomeBtn").onclick=async()=>{employeeFolderId=null;$("employeeMaterialSearch").value="";await loadEmployeeSections()};
 $("employeeBackBtn").onclick=async()=>{
   try{
-    if(!employeeFolderId){
-      return;
-    }
-    const sections=await readSections();
+    if(!employeeFolderId)return;
+    const {sections}=await getEmployeeLibrary();
     const current=getFolderById(sections,employeeFolderId);
     employeeFolderId=current?normalizedParent(current):null;
     $("employeeMaterialSearch").value="";
@@ -358,9 +373,9 @@ async function loadMaterialCounters(){
     if($("countArchive"))$("countArchive").textContent="0";
   }
 }
-async function loadEmployeeMaterialsUpdatedAt(){
+async function loadEmployeeMaterialsUpdatedAt(itemsOverride=null){
   try{
-    const items=await readMaterials();
+    const items=itemsOverride||employeeMaterialsCache||await readMaterials();
     const visible=items.filter(x=>x.archived!==true);
     const latest=visible.map(x=>x.updatedAt||x.createdAt).filter(Boolean).sort((a,b)=>{
       const ta=a?.toDate?a.toDate().getTime():new Date(a).getTime();
@@ -478,6 +493,10 @@ async function moveMaterial(materialId,direction,items){
 }
 function searchHaystackFolder(s){return `${s.name||""}`.toLocaleLowerCase("ru")}
 function searchHaystackMaterial(m){return `${m.name||""} ${m.fileName||""} ${(Array.isArray(m.keywords)?m.keywords.join(" "):"")} ${m.searchText||m.extractedText||""}`.toLocaleLowerCase("ru")}
+function displayMaterialName(m){
+  const raw=(m.name||m.fileName||"Материал").replace(/\.[^.]+$/,"");
+  return raw.replace(/_+/g," ").replace(/\s+/g," ").trim();
+}
 function materialPath(sections,m){
   const folder=getFolderById(sections,m.folderId||null);return folder?getFolderPath(sections,folder.id).map(x=>x.name).join(" / "):"Материалы";
 }
@@ -506,16 +525,63 @@ async function openMaterialSecure(materialId){
           html,body{margin:0;height:100%;background:#111;overflow:hidden}
           body{-webkit-user-select:none;user-select:none}
           iframe,img{width:100%;height:100%;border:0;object-fit:contain}
-        </style></head><body oncontextmenu="return false" oncopy="return false" oncut="return false" onselectstart="return false"></body></html>`);
+        
+.employeeNav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.employeeNav button{width:100%;min-width:0;white-space:nowrap;padding:12px 7px;font-size:14px}
+.employeeFolder{background:#faf9f6!important}
+.employeeMaterial{background:#e9eef1!important;border-color:#d4dce1!important}
+.employeeMaterial:hover{background:#e1e8ec!important}
+.employeeMaterial b,.employeeFolder b{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.employeeMaterial span{color:#69747c!important}
+@media(max-width:600px){
+  .employeeNav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;width:100%!important}
+  .employeeNav button{width:100%!important;min-width:0!important;padding:11px 4px!important;font-size:12.5px!important;white-space:nowrap!important}
+}
+
+</style></head><body oncontextmenu="return false" oncopy="return false" oncut="return false" onselectstart="return false"></body></html>`);
         doc.close();
         if(type.includes("pdf")){
-          const embed=doc.createElement("embed");
-          embed.src=url+"#toolbar=0&navpanes=0&scrollbar=1";
-          embed.type="application/pdf";
-          embed.style.width="100%";
-          embed.style.height="100%";
-          embed.style.border="0";
-          doc.body.appendChild(embed);
+          doc.body.innerHTML='<div id="pdfStatus" style="color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;padding:24px">Загрузка документа...</div>';
+          const buffer=await blob.arrayBuffer();
+          const bytes=new Uint8Array(buffer);
+          let binary="";
+          for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
+          const base64=btoa(binary);
+
+          const script=doc.createElement("script");
+          script.src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+          script.onload=async()=>{
+            try{
+              tab.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+              const data=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+              const pdf=await tab.pdfjsLib.getDocument({data}).promise;
+              doc.body.innerHTML="";
+              doc.body.style.cssText="margin:0;background:#111;padding:10px;overflow:auto;-webkit-user-select:none;user-select:none";
+              doc.body.oncontextmenu=()=>false;
+              doc.body.oncopy=()=>false;
+              doc.body.oncut=()=>false;
+              doc.body.onselectstart=()=>false;
+
+              for(let n=1;n<=pdf.numPages;n++){
+                const page=await pdf.getPage(n);
+                const baseViewport=page.getViewport({scale:1});
+                const maxWidth=Math.min(tab.innerWidth-20,1100);
+                const scale=Math.max(1,Math.min(2,maxWidth/baseViewport.width));
+                const viewport=page.getViewport({scale});
+                const canvas=doc.createElement("canvas");
+                canvas.width=Math.floor(viewport.width);
+                canvas.height=Math.floor(viewport.height);
+                canvas.style.cssText="display:block;max-width:100%;height:auto;margin:0 auto 10px;background:#fff";
+                canvas.oncontextmenu=()=>false;
+                doc.body.appendChild(canvas);
+                await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
+              }
+            }catch(err){
+              doc.body.innerHTML='<div style="color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;padding:24px">Не удалось отобразить PDF.</div>';
+            }
+          };
+          script.onerror=()=>{doc.body.innerHTML='<div style="color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;padding:24px">Не удалось загрузить просмотрщик PDF.</div>'};
+          doc.head.appendChild(script);
         }else{
           const img=doc.createElement("img");
           img.src=url;img.draggable=false;
@@ -763,12 +829,22 @@ async function loadSections(createDefaults=false){
   }catch(e){msg($("sectionMsg"),friendly(e));throw e}
 }
 
+
+async function getEmployeeLibrary(force=false){
+  const fresh=employeeSectionsCache&&employeeMaterialsCache&&(Date.now()-employeeCacheLoadedAt<EMPLOYEE_CACHE_TTL);
+  if(!force&&fresh)return {sections:employeeSectionsCache,items:employeeMaterialsCache};
+  const [sections,items]=await Promise.all([readSections(),readMaterials()]);
+  employeeSectionsCache=sections;
+  employeeMaterialsCache=items;
+  employeeCacheLoadedAt=Date.now();
+  return {sections,items};
+}
+
 async function loadEmployeeSections(){
   try{
-    await loadEmployeeMaterialsUpdatedAt();
-    const sections=await readSections();if(employeeFolderId&&!getFolderById(sections,employeeFolderId))employeeFolderId=null;
+    const {sections,items}=await getEmployeeLibrary();
+    if(employeeFolderId&&!getFolderById(sections,employeeFolderId))employeeFolderId=null;
     const query=$("employeeMaterialSearch").value.trim().toLocaleLowerCase("ru");
-    const items=await readMaterials();
     let folders=(query?sections:getChildren(sections,employeeFolderId)).filter(s=>folderAllowedForPosition(s,currentEmployeePosition)&&!isFolderArchived(sections,s));
     let materials=items.filter(m=>(m.folderId||null)===(employeeFolderId||null)&&!m.archived);
     if(query){
@@ -777,7 +853,7 @@ async function loadEmployeeSections(){
     }
     renderEmployeeBreadcrumb(sections);
     const folderHtml=folders.map(s=>{const kids=getChildren(sections,s.id).filter(k=>folderAllowedForPosition(k,currentEmployeePosition));const preview=kids.slice(0,4).map(k=>`<span>└ ${escapeHtml(k.name||"Папка")}</span>`).join("");return `<button class="tile tileButton employeeFolder" data-id="${s.id}"><b>${escapeHtml(s.name||"Раздел")} →</b>${preview?`<div class="miniTree">${preview}</div>`:`<span>Открыть</span>`}${query?`<div class="searchResultPath">Папка · ${escapeHtml(getFolderPath(sections,s.id).map(x=>x.name).join(" / "))}</div>`:""}</button>`}).join("");
-    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-id="${m.id}"><b>${escapeHtml(m.name||m.fileName||"Материал")}</b><span>${query?`Материал · ${escapeHtml(materialPath(sections,m))}`:"Открыть материал"}</span></button>`).join("");
+    const materialHtml=materials.map(m=>`<button class="tile tileButton employeeMaterial" data-id="${m.id}"><b>${escapeHtml(displayMaterialName(m))}</b><span>${query?`Материал · ${escapeHtml(materialPath(sections,m))}`:"Открыть материал"}</span></button>`).join("");
     $("employeeSections").innerHTML=(folderHtml+materialHtml)||`<div class="notice" style="grid-column:1/-1">${query?"Ничего не найдено.":"В этой папке пока ничего нет."}</div>`;
     document.querySelectorAll(".employeeFolder").forEach(b=>b.onclick=async()=>{employeeFolderId=b.dataset.id;$("employeeMaterialSearch").value="";await loadEmployeeSections()});
     document.querySelectorAll(".employeeMaterial").forEach(b=>b.onclick=()=>openMaterialSecure(b.dataset.id));
@@ -875,9 +951,13 @@ onAuthStateChanged(auth,async user=>{
         ? `${p.data().name||user.email} · ${currentEmployeePosition}`
         : (user.email||"");
       employeeFolderId=null;
+      employeeSectionsCache=null;
+      employeeMaterialsCache=null;
+      employeeCacheLoadedAt=0;
       show("employeeView");
+      const library=await getEmployeeLibrary(true);
       await loadEmployeeSections();
-      await loadEmployeeMaterialsUpdatedAt();
+      await loadEmployeeMaterialsUpdatedAt(library.items);
     }
   }catch(e){
     console.error(e);
