@@ -1,1 +1,1 @@
-export async function onRequest(context){return context.next();}
+export async function onRequest(context){const response=await context.next();const ct=response.headers.get('content-type')||'';if(!ct.includes('text/html'))return response;const text=await response.text();const injected=text.replace('<script type="module">','<script src="/test-upgrade.js"></script>\n<script type="module">');const headers=new Headers(response.headers);headers.delete('content-length');return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
