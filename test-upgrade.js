@@ -1,9 +1,11 @@
+// FLO Academy release 1.0028
+window.FLO_TESTS_VERSION='1.0028';
 (()=>{
   let mode='practice', reviewer=false, questionCount=0;
   let allowCommittedChange=false;
   const confirmedQuestions=new Set();
   const originalFetch=window.fetch.bind(window), originalConfirm=window.confirm.bind(window);
-  const setMode=m=>{mode=m==='attestation'?'attestation':'practice';window.__floTestMode=mode};
+  const setMode=()=>{mode='practice';window.__floTestMode='practice'};
 
   window.fetch=async function(input,init={}){
     const url=typeof input==='string'?input:(input?.url||'');
@@ -24,11 +26,7 @@
 
   window.confirm=function(message){
     const s=String(message||'');
-    if(s.includes('10 минут на 10 вопросов')){
-      return mode==='attestation'
-        ? originalConfirm('Начать аттестацию? 20 вопросов, 20 минут. Проходной результат — 85%.')
-        : true;
-    }
+    if(s.includes('10 минут на 10 вопросов'))return true;
     if(s.includes('Ответы выбраны на')&&s.includes('из 10 вопросов')){
       return originalConfirm(s.replace('из 10 вопросов','из 20 вопросов'));
     }
@@ -82,7 +80,7 @@
     const review=document.querySelector('[data-test-page="review"]');
 
     if(overview)overview.classList.toggle('hidden',!reviewer);
-    if(catalog)catalog.classList.toggle('hidden',reviewer);
+    if(catalog)catalog.classList.remove('hidden');
     if(history)history.classList.toggle('hidden',reviewer);
     if(results)results.classList.toggle('hidden',!reviewer);
     if(review)review.classList.toggle('hidden',!reviewer);
@@ -115,7 +113,7 @@
 
   function catalog(){
     const b=document.querySelector('[data-test-page="catalog"]');
-    if(reviewer||!b?.classList.contains('isSelected'))return;
+    if(!b?.classList.contains('isSelected'))return;
     const c=document.getElementById('testsContent');
     const cards=c?.querySelector('.testCatalog');
     if(!c||!cards||c.querySelector('#practiceRandomStart'))return;
@@ -131,27 +129,16 @@
 
     const actions=document.createElement('div');
     actions.className='floTestChoiceGrid';
+    actions.style.gridTemplateColumns='1fr';
 
     const practice=document.createElement('button');
     practice.id='practiceRandomStart';
     practice.className='primary';
     practice.textContent='Пройти тест';
     practice.style.margin='0';
-
-    const att=document.createElement('button');
-    att.id='attestationRandomStart';
-    att.className='secondary';
-    att.textContent='Аттестация';
-
     practice.onclick=()=>startRandom(cards,'practice');
-    att.onclick=()=>{
-      setMode('attestation');
-      if(originalConfirm('Начать аттестацию? 20 вопросов, 20 минут. Проходной результат — 85%.')){
-        startRandom(cards,'attestation')
-      }
-    };
 
-    actions.append(practice,att);
+    actions.append(practice);
     cards.before(box,actions);
   }
 
@@ -252,7 +239,7 @@
     installAnswerConfirmation();
 
     const title=document.getElementById('runnerTitle')?.textContent||'';
-    const att=title.includes('Аттестация');
+    const att=false;
 
     const clock=overlay.querySelector('.runnerClock');
     if(clock)clock.style.display=att?'flex':'none';
@@ -300,7 +287,7 @@
       });
 
       const title=row.querySelector('b')?.textContent||'';
-      if(title.includes('Аттестация')&&!t.querySelector('.attStatus')){
+      if(false&&!t.querySelector('.attStatus')){
         const m=(t.textContent||'').match(/(\d+)%/);
         if(m){
           const s=document.createElement('small');
