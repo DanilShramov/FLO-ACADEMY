@@ -1,5 +1,5 @@
-// FLO Academy release 1.0028
-const RELEASE_VERSION='1.0028';
+// FLO Academy release 1.0062
+const RELEASE_VERSION='1.0062';
 
 export async function onRequest(context){
   const response=await context.next();
@@ -17,8 +17,10 @@ export async function onRequest(context){
 
   let text=await response.text();
   text=text.replace(/const APP_VERSION="[^"]+";/, `const APP_VERSION="${RELEASE_VERSION}";`);
+
   const scripts=`<script src="/release-version.js?v=${RELEASE_VERSION}"></script>
 <script src="/test-upgrade.js?v=${RELEASE_VERSION}"></script>
+<script src="/results-filter.js?v=${RELEASE_VERSION}"></script>
 <script type="module">`;
 
   const injected=text.replace('<script type="module">', scripts);
