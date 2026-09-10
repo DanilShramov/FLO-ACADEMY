@@ -1,6 +1,6 @@
-// FLO Academy release 1.0062
+// FLO Academy release 1.0063
 (()=>{
-  const RELEASE_VERSION='1.0062';
+  const RELEASE_VERSION='1.0063';
   window.FLO_RESULTS_FILTER_VERSION=RELEASE_VERSION;
 
   const previousFetch=window.fetch.bind(window);
@@ -59,8 +59,8 @@
     }
 
     return new Response(JSON.stringify({
-      items: collected,
-      nextCursor: finalCursor,
+      items:collected,
+      nextCursor:finalCursor,
       serverNow
     }),{
       status:200,
@@ -84,8 +84,6 @@
       sub.textContent='Только результаты аттестации · сначала новые';
     }
 
-    // Дополнительная защита на уровне интерфейса:
-    // если в DOM каким-то образом попал обычный тест, он не отображается.
     content.querySelectorAll('.historyRow').forEach(row=>{
       const title=row.querySelector('b')?.textContent?.trim().toLowerCase()||'';
       if(title && title!=='аттестация')row.remove();
