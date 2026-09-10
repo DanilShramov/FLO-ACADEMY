@@ -1,8 +1,8 @@
-// FLO Academy 1.0075: explicit navigation, no DOM polling.
+// FLO Academy 1.0076: explicit navigation, no DOM polling.
 (()=>{
  const $=id=>document.getElementById(id),pending=new Map();
  let profile=null,routed=false;
- const version=window.__FLO_RELEASE_VERSION__||'1.0075';
+ const version=window.__FLO_RELEASE_VERSION__||'1.0076';
  const names={team:'Команда',materials:'Материалы',learning:'Обучение',checks:'Чек-листы',tips:'Чаевые',inventory:'Инвентаризация',manage:'Управление обучением'};
  const specs=[['team','Люди FLO','Наши люди и общая работа'],['materials','База знаний','Обучение и стандарты'],['learning','Развитие','Маршруты, тесты и ознакомления'],['checks','Рабочий день','Чек-листы смены и история'],['tips','Команда','Расчёт и история распределений'],['inventory','Учёт','Бой посуды и инвентаризация'],['manage','Для управляющего','Маршруты, ознакомления и результаты']];
  function feature(name){
