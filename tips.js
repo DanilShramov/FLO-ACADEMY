@@ -1,6 +1,6 @@
-// FLO Academy release 1.0073
+// FLO Academy release 1.0075
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0073';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0075';
   window.FLO_TIPS_VERSION=VERSION;
 
   const state={loaded:false,loadedAt:0,loading:false,user:null,team:[],rules:null,history:[],scope:'own'};

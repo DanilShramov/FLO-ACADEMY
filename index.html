@@ -54,8 +54,8 @@ button,input,select{font-family:inherit}button{min-height:44px;touch-action:mani
 @media(max-width:600px){.testStats{gap:7px}.testStats>div{padding:14px 10px}.testStats b{font-size:27px}.testStats span{font-size:12px}.testLandingActions{grid-template-columns:1fr}.testCatalog{grid-template-columns:1fr}.testTabs{gap:6px}.testTabs button{font-size:13px;padding:10px}.testNav button{font-size:12px;padding:10px 4px}.testOverlay{padding:8px}.testWindow{padding:20px 16px;border-radius:18px;min-height:calc(100dvh - 16px);padding-bottom:calc(20px + env(safe-area-inset-bottom))}.runnerTop{align-items:flex-start;gap:10px}.runnerTop h2{font-size:21px}.runnerClock>span:first-child{font-size:24px}.questionSteps{grid-template-columns:repeat(5,minmax(0,1fr));margin:20px 0;gap:7px}.questionHeading h3{font-size:23px}.testOption{padding:14px 12px}.runnerBottom .primary{flex-basis:100%;order:3}.historyRow{align-items:flex-start;padding:16px;gap:12px}.resultPill{font-size:13px}.historyRow b{font-size:14px}.testBrand{font-size:26px;letter-spacing:4px}}
 
 </style>
-<link rel="stylesheet" href="/staff-learning.css?v=1.0073">
-<link rel="stylesheet" href="/polish.css?v=1.0073">
+<link rel="stylesheet" href="/staff-learning.css?v=1.0075">
+<link rel="stylesheet" href="/polish.css?v=1.0075">
 </head>
 <body>
 <div class="wrap">
@@ -216,14 +216,14 @@ button,input,select{font-family:inherit}button{min-height:44px;touch-action:mani
  </div>
 </div>
 
-<script>window.__FLO_RELEASE_VERSION__="1.0073";</script>
-<script src="/learning-ui.js?v=1.0073"></script>
-<script src="/release-version.js?v=1.0073"></script>
-<script src="/test-upgrade.js?v=1.0073"></script>
-<script src="/results-filter.js?v=1.0073"></script>
-<script src="/employee-team.js?v=1.0073"></script>
+<script>window.__FLO_RELEASE_VERSION__="1.0075";</script>
+<script src="/learning-ui.js?v=1.0075"></script>
+<script src="/release-version.js?v=1.0075"></script>
+<script src="/test-upgrade.js?v=1.0075"></script>
+<script src="/results-filter.js?v=1.0075"></script>
+<script src="/employee-team.js?v=1.0075"></script>
 <script type="module">
-import {installStaff} from "./staff-learning.js?v=1.0073";
+import {installStaff} from "./staff-learning.js?v=1.0075";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc as firestoreSetDoc, collection, getDocs, deleteDoc as firestoreDeleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
@@ -252,7 +252,7 @@ let accessEditingFolderId=null;
 let employeeSectionsCache=null;
 let employeeMaterialsCache=null;
 // Release number changes only when a new build is issued, never on page reload.
-const APP_VERSION="1.0073";
+const APP_VERSION="1.0075";
 document.querySelectorAll("[data-app-version]").forEach(el=>el.textContent="Версия "+APP_VERSION);
 const libraryCache=new Map();
 let cacheGeneration=0;
@@ -948,7 +948,7 @@ $("employeeForm").addEventListener("submit",async e=>{
   try{
     const {initializeApp:init2,deleteApp}=await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js");const {getAuth:getAuth2,createUserWithEmailAndPassword:create2,signOut:signOut2}=await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js");
     const secondary=init2(firebaseConfig,"employeeCreator-"+Date.now()),secondaryAuth=getAuth2(secondary);const cred=await create2(secondaryAuth,email,password);const uid=cred.user.uid;
-    await setDoc(doc(db,"users",uid),{role:"employee",name,email,position,active:true,createdAt:serverTimestamp()});await setDoc(doc(db,"employees",uid),{name,email,position,active:true,createdAt:serverTimestamp()});
+    await setDoc(doc(db,"users",uid),{role:"employee",name,email,position,active:true,createdAt:serverTimestamp()});await setDoc(doc(db,"employees",uid),{name,email,position,active:true,createdAt:serverTimestamp()});window.dispatchEvent(new Event("flo-team-updated"));
     await signOut2(secondaryAuth);await deleteApp(secondary);$("employeeForm").reset();msg($("formMsg"),"Сотрудник создан и сохранён.","ok");await loadEmployees();window.dispatchEvent(new Event("flo-employees-changed"));setTimeout(()=>{$("modal").classList.add("hidden");msg($("formMsg"),"")},800);
   }catch(err){msg($("formMsg"),friendly(err))}
 });
