@@ -1,8 +1,7 @@
-// FLO Academy release 1.0066
+// FLO Academy release 1.0069
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0066';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0069';
   window.FLO_LEARNING_UI_VERSION=VERSION;
-
   const $=id=>document.getElementById(id);
 
   function runStaffAction(action,direct=false){
@@ -14,6 +13,10 @@
     document.body.appendChild(b);
     b.click();
     setTimeout(()=>b.remove(),0);
+  }
+
+  function tileMarkup(eyebrow,title,description){
+    return `<span class="tileEyebrow">${eyebrow}</span><b>${title}</b><span>${description} <span aria-hidden="true">↗</span></span>`;
   }
 
   function ensureStyles(){
@@ -39,18 +42,26 @@
         justify-content:space-between;
         gap:14px;
       }
-      #floLearningHub .floLearningCard b{
-        font-size:21px;
+      #floLearningHub .floLearningCard b{font-size:21px}
+      #floLearningHub .floLearningCard span{color:var(--staff-muted,#65746e);font-size:14px}
+      #staffFastHome{position:relative}
+      #staffFastHome .staffHero{margin-top:0}
+
+      #employeeChecksTile,#employeeTipsTile,#employeeManageLearningTile,#employeeInventoryTile,
+      #adminChecksTile,#adminTipsTile,#adminInventoryTile,#staffManage{
+        background:#e9eddf;
+        border-color:#d5ddc9;
+        color:#304534;
       }
-      #floLearningHub .floLearningCard span{
-        color:var(--staff-muted,#65746e);
-        font-size:14px;
+      #employeeTipsTile,#adminTipsTile{
+        background:#f0ece2;
+        border-color:#e1d8c6;
+        color:#544936;
       }
-      #staffFastHome{
-        position:relative;
-      }
-      #staffFastHome .staffHero{
-        margin-top:0;
+      #employeeInventoryTile,#adminInventoryTile{
+        background:#e8eef1;
+        border-color:#d3e0e4;
+        color:#345566;
       }
       @media(max-width:700px){
         #floLearningHub .floLearningGrid{grid-template-columns:1fr}
@@ -68,7 +79,6 @@
   function ensureHub(){
     let d=$('floLearningHub');
     if(d)return d;
-
     d=document.createElement('dialog');
     d.id='floLearningHub';
     d.className='staffPanel';
@@ -96,7 +106,6 @@
         </div>
       </main>
     `;
-
     d.querySelector('[data-hub-close]').onclick=closeHub;
     d.querySelectorAll('[data-hub-action]').forEach(b=>{
       b.onclick=()=>{
@@ -106,7 +115,6 @@
         else runStaffAction(action);
       };
     });
-
     document.body.appendChild(d);
     return d;
   }
@@ -117,53 +125,104 @@
     if(!d.open)d.showModal();
   }
 
-  function renameLearningTile(){
-    const tile=$('employeeTestsTile');
-    if(!tile)return;
+  function renameLearningTiles(){
+    const employee=$('employeeTestsTile');
+    if(employee)employee.innerHTML=tileMarkup('Развитие','Обучение','Маршруты, тесты и ознакомления');
+    const admin=$('openTestsBtn');
+    if(admin)admin.innerHTML='<b>Обучение</b><span>Маршруты, тесты и ознакомления →</span>';
+  }
 
-    const eyebrow=tile.querySelector('.tileEyebrow');
-    const title=tile.querySelector('b');
-    const tail=tile.querySelector('span:last-child');
+  function ensureEmployeeTile(id,eyebrow,title,description,action){
+    const host=$('employeeHomePanel');
+    if(!host)return null;
+    let tile=$(id);
+    if(!tile){
+      tile=document.createElement('button');
+      tile.id=id;
+      tile.type='button';
+      tile.className='homeTile';
+      host.appendChild(tile);
+    }
+    tile.innerHTML=tileMarkup(eyebrow,title,description);
+    if(action==='tips'){
+      tile.onclick=()=>window.FLO_TIPS?.open();
+      delete tile.dataset.act;
+    }else if(action==='inventory'){
+      tile.onclick=()=>window.FLO_INVENTORY?.open();
+      delete tile.dataset.act;
+    }else{
+      tile.onclick=null;
+      tile.dataset.act=action;
+    }
+    return tile;
+  }
 
-    if(eyebrow && eyebrow.textContent!=='Обучение')eyebrow.textContent='Обучение';
-    if(title && title.textContent!=='Обучение')title.textContent='Обучение';
+  function ensureAdminTile(id,title,description,action){
+    const grid=$('adminView')?.querySelector('.grid');
+    if(!grid)return null;
+    let tile=$(id);
+    if(!tile){
+      tile=document.createElement('button');
+      tile.id=id;
+      tile.type='button';
+      tile.className='tile tileButton';
+      grid.appendChild(tile);
+    }
+    tile.innerHTML=`<b>${title}</b><span>${description} →</span>`;
+    if(action==='tips'){
+      tile.onclick=()=>window.FLO_TIPS?.open();
+      delete tile.dataset.act;
+    }else if(action==='inventory'){
+      tile.onclick=()=>window.FLO_INVENTORY?.open();
+      delete tile.dataset.act;
+    }else{
+      tile.onclick=null;
+      tile.dataset.act=action;
+    }
+    return tile;
+  }
 
-    if(tail){
-      const wanted='Маршруты, тесты и ознакомления ↗';
-      if(tail.textContent.trim()!==wanted){
-        tail.innerHTML='Маршруты, тесты и ознакомления <span aria-hidden="true">↗</span>';
-      }
+  function moveManageToMain(){
+    const manage=$('staffManage');
+    if(!manage)return;
+    const adminVisible=$('adminView')&&!$('adminView').classList.contains('hidden');
+    const employeeVisible=$('employeeView')&&!$('employeeView').classList.contains('hidden');
+
+    if(adminVisible){
+      const grid=$('adminView')?.querySelector('.grid');
+      if(grid&&manage.parentElement!==grid)grid.appendChild(manage);
+      manage.className='tile tileButton';
+      manage.innerHTML='<b>Управление обучением</b><span>Маршруты, ознакомления и настройки →</span>';
+      manage.style.margin='';
+    }
+
+    if(employeeVisible){
+      const tile=ensureEmployeeTile(
+        'employeeManageLearningTile',
+        'Для управляющего',
+        'Управление обучением',
+        'Маршруты, ознакомления и настройки',
+        'manage'
+      );
+      if(tile)tile.classList.remove('hidden');
     }
   }
 
-  function cleanHome(){
+  function cleanSmallHomeButtons(){
     const home=$('staffHome');
-
-    if(home){
-      $('staffFastHome')?.remove();
-
-      const shelf=home.querySelector('.staffShelf');
-      if(shelf){
-        shelf.querySelectorAll('button').forEach(b=>{
-          if(b.dataset.act==='learning' || b.dataset.act==='events')b.remove();
-        });
-      }
-    }else{
-      ensureFastHome();
-    }
-
-    const manage=$('staffManage');
-    if(manage && manage.textContent!=='Управление обучением'){
-      manage.textContent='Управление обучением';
-    }
+    if(!home)return;
+    $('staffFastHome')?.remove();
+    const shelf=home.querySelector('.staffShelf');
+    if(!shelf)return;
+    shelf.querySelectorAll('button').forEach(b=>{
+      if(['learning','events','checks','manage'].includes(b.dataset.act))b.remove();
+    });
   }
 
   function ensureFastHome(){
-    if($('staffHome') || $('staffFastHome'))return;
-
+    if($('staffHome')||$('staffFastHome'))return;
     const host=$('employeeHomePanel');
     if(!host)return;
-
     const fast=document.createElement('div');
     fast.id='staffFastHome';
     fast.innerHTML=`
@@ -174,14 +233,58 @@
         <button type="button" class="secondary" data-fast-learning>Открыть обучение</button>
       </div>
     `;
-
     fast.querySelector('[data-fast-learning]').onclick=openHub;
     host.before(fast);
   }
 
+  let inventoryPermissionRequested=false;
+  let inventoryAllowed=false;
+
+  async function syncInventoryPermission(){
+    if(inventoryPermissionRequested)return;
+    inventoryPermissionRequested=true;
+    try{
+      inventoryAllowed=await window.FLO_INVENTORY?.canAccess?.();
+    }catch{
+      inventoryAllowed=false;
+    }
+    const employee=$('employeeInventoryTile');
+    if(employee)employee.classList.toggle('hidden',!inventoryAllowed);
+    const admin=$('adminInventoryTile');
+    if(admin)admin.classList.toggle('hidden',!inventoryAllowed);
+  }
+
+  function buildMain(){
+    ensureEmployeeTile('employeeChecksTile','Рабочий день','Чек-листы','Чек-листы смены и отметки выполнения','checks');
+    ensureEmployeeTile('employeeTipsTile','Команда','Чаевые','Расчёт и история распределений','tips');
+
+    const employeeInventory=ensureEmployeeTile(
+      'employeeInventoryTile',
+      'Учёт',
+      'Инвентаризация',
+      'Бой посуды и шестинедельная инвентаризация',
+      'inventory'
+    );
+    if(employeeInventory)employeeInventory.classList.toggle('hidden',!inventoryAllowed);
+
+    ensureAdminTile('adminChecksTile','Чек-листы','Чек-листы смены и отметки выполнения','checks');
+    ensureAdminTile('adminTipsTile','Чаевые','Расчёт и история распределений','tips');
+
+    const adminInventory=ensureAdminTile(
+      'adminInventoryTile',
+      'Инвентаризация',
+      'Бой посуды и шестинедельная инвентаризация',
+      'inventory'
+    );
+    if(adminInventory)adminInventory.classList.toggle('hidden',!inventoryAllowed);
+
+    moveManageToMain();
+    syncInventoryPermission();
+  }
+
   document.addEventListener('click',e=>{
-    const tile=e.target.closest('#employeeTestsTile');
-    if(tile){
+    const learningTile=e.target.closest('#employeeTestsTile,#openTestsBtn');
+    if(learningTile){
       e.preventDefault();
       e.stopImmediatePropagation();
       openHub();
@@ -189,7 +292,7 @@
     }
 
     const learning=e.target.closest('[data-act="learning"]');
-    if(learning && learning.dataset.learningDirect!=='1'){
+    if(learning&&learning.dataset.learningDirect!=='1'){
       e.preventDefault();
       e.stopImmediatePropagation();
       openHub();
@@ -199,7 +302,7 @@
     const back=e.target.closest('[data-act="panelBack"]');
     if(back){
       const title=$('staffTitle')?.textContent?.trim();
-      if(title==='Моё обучение' || title==='История ознакомлений'){
+      if(title==='Моё обучение'||title==='История ознакомлений'){
         e.preventDefault();
         e.stopImmediatePropagation();
         $('staffDialog')?.close();
@@ -212,10 +315,11 @@
   function normalize(){
     scheduled=false;
     ensureStyles();
-    renameLearningTile();
-    cleanHome();
+    renameLearningTiles();
+    cleanSmallHomeButtons();
+    if(!$('staffHome'))ensureFastHome();
+    buildMain();
   }
-
   function schedule(){
     if(scheduled)return;
     scheduled=true;
