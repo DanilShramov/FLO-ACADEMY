@@ -1,25 +1,26 @@
-// FLO Academy release 1.0064
+// FLO Academy release 1.0066
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0064';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0066';
 
   window.FLO_ACADEMY_VERSION=VERSION;
   window.FLO_TESTS_VERSION=VERSION;
   window.FLO_RESULTS_FILTER_VERSION=VERSION;
+  window.FLO_LEARNING_UI_VERSION=VERSION;
 
   let scheduled=false;
 
   const apply=()=>{
     scheduled=false;
+    const value='Версия '+VERSION;
 
     document.querySelectorAll('[data-app-version]').forEach(el=>{
-      const value='Версия '+VERSION;
       if(el.textContent!==value)el.textContent=value;
     });
 
-    // Синхронизируем все JS-модули с одной версией сборки.
     window.FLO_ACADEMY_VERSION=VERSION;
     window.FLO_TESTS_VERSION=VERSION;
     window.FLO_RESULTS_FILTER_VERSION=VERSION;
+    window.FLO_LEARNING_UI_VERSION=VERSION;
   };
 
   const schedule=()=>{
