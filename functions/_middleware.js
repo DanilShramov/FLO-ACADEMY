@@ -4,9 +4,11 @@ const RELEASE_VERSION='1.0063';
 export async function onRequest(context){
   const response=await context.next();
   const headers=new Headers(response.headers);
+
   headers.set('X-FLO-Version',RELEASE_VERSION);
 
   const ct=response.headers.get('content-type')||'';
+
   if(!ct.includes('text/html')){
     return new Response(response.body,{
       status:response.status,
@@ -20,7 +22,6 @@ export async function onRequest(context){
 
   const scripts=`<script src="/test-upgrade.js?v=${RELEASE_VERSION}"></script>
 <script src="/results-filter.js?v=${RELEASE_VERSION}"></script>
-<script src="/overview-fix.js?v=${RELEASE_VERSION}"></script>
 <script src="/release-version.js?v=${RELEASE_VERSION}"></script>
 <script type="module">`;
 
