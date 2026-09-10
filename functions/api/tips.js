@@ -1,4 +1,4 @@
-// FLO Academy release 1.0069
+// FLO Academy release 1.0071
 const PROJECT_DEFAULT='flo-academy';
 const KEY_DEFAULT='AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A';
 const CONFIG='academyStaffConfig/main';
@@ -298,26 +298,55 @@ async function saveCalculation(store,user,body){
 export async function onRequest({request,env}){
   try{
     if(!['GET','POST'].includes(request.method))fail(405,'Метод не поддерживается.');
-    const cfg=credentials(env),store=new Store(cfg.project,await accessToken(cfg)),user=await identity(request,env,store);
-    const url=new URL(request.url),action=url.searchParams.get('action')||'bootstrap';
+
+    const cfg=credentials(env);
+    const store=new Store(cfg.project,await accessToken(cfg));
+    const user=await identity(request,env,store);
+
+    const url=new URL(request.url);
+    const action=url.searchParams.get('action')||'bootstrap';
+
     let body={};
     if(request.method==='POST'){
-      const text=await request.text();if(text.length>100000)fail(413,'Слишком большой запрос.');
-      try{body=JSON.parse(text||'{}')}catch{fail(400,'Не удалось прочитать запрос.')}
+      const text=await request.text();
+      if(text.length>100000)fail(413,'Слишком большой запрос.');
+      try{body=JSON.parse(text||'{}')}
+      catch{fail(400,'Не удалось прочитать запрос.')}
     }
-    const [configRecord,employeeRecords]=await Promise.all([store.get(CONFIG),store.list('employees')]);
-    const team=activeTeam(configRecord?.data||{},employeeRecords);
 
     if(action==='bootstrap'){
-      const history=await allHistory(store);
+      const historyPromise=allHistory(store);
+
+      if(!user.canCalculate){
+        const history=await historyPromise;
+        return json({
+          user:{name:user.name,position:user.position,canCalculate:false},
+          team:[],
+          rules:RULES,
+          history:ownHistory(history,user),
+          historyScope:'own',
+          serverNow:Date.now()
+        });
+      }
+
+      const [history,configRecord,employeeRecords]=await Promise.all([
+        historyPromise,
+        store.get(CONFIG),
+        store.list('employees')
+      ]);
+
+      const team=activeTeam(configRecord?.data||{},employeeRecords);
+
       return json({
-        user:{name:user.name,position:user.position,canCalculate:user.canCalculate},
-        team,rules:RULES,
-        history:user.canCalculate?history:ownHistory(history,user),
-        historyScope:user.canCalculate?'all':'own',
+        user:{name:user.name,position:user.position,canCalculate:true},
+        team,
+        rules:RULES,
+        history,
+        historyScope:'all',
         serverNow:Date.now()
       });
     }
+
     if(action==='history'){
       const history=await allHistory(store);
       return json({
@@ -326,17 +355,31 @@ export async function onRequest({request,env}){
         serverNow:Date.now()
       });
     }
+
     if(action==='calculate'){
       if(request.method!=='POST')fail(405,'Нужно отправить данные расчёта.');
+      if(!user.canCalculate)fail(403,'Калькулятор доступен менеджеру и выше.');
+
+      const [configRecord,employeeRecords]=await Promise.all([
+        store.get(CONFIG),
+        store.list('employees')
+      ]);
+
+      const team=activeTeam(configRecord?.data||{},employeeRecords);
       return json(await calculate(store,user,body,team));
     }
+
     if(action==='save'){
       if(request.method!=='POST')fail(405,'Нужно отправить результат.');
       return json(await saveCalculation(store,user,body));
     }
+
     fail(404,'Действие не найдено.');
   }catch(e){
     if(!(e instanceof HttpError))console.error('Tips API failed',e);
-    return json({error:e instanceof HttpError?e.message:'Не удалось выполнить действие.'},e.status||500);
+    return json(
+      {error:e instanceof HttpError?e.message:'Не удалось выполнить действие.'},
+      e.status||500
+    );
   }
 }

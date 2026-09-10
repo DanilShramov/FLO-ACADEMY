@@ -1,4 +1,4 @@
-// FLO Academy release 1.0069
+// FLO Academy release 1.0071
 const PROJECT_DEFAULT='flo-academy';
 const KEY_DEFAULT='AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A';
 const BREAKAGE='academyInventoryBreakage';
