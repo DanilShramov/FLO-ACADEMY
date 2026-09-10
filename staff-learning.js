@@ -1,4 +1,4 @@
-import {versionOf,accessible,assigned,acknowledged,routeState,localDay,testStatus} from './lib/staff-domain.mjs?v=1.0072';
+import {versionOf,accessible,assigned,acknowledged,routeState,localDay,testStatus} from './lib/staff-domain.mjs?v=1.0073';
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=v=>v?new Date(v?.toMillis?v.toMillis():v?.seconds?v.seconds*1000:v).toLocaleString('ru-RU'):'—';
 const button=(text,action,id='',extra='')=>'<button type="button" class="secondary" data-act="'+action+'" data-id="'+esc(id)+'" '+extra+'>'+esc(text)+'</button>';
@@ -134,7 +134,7 @@ async function openMaterial(id){
  const tab=window.open('about:blank','_blank');if(!tab){toast('Разрешите открытие вкладки для просмотра.');return}
  tab.document.body.textContent='Загрузка материала…';
  try{await ready();const m=lib.items.find(x=>x.id===id);if(!m)throw Error('Материал не найден.');
- const viewer=await import('./staff-viewer.js?v=1.0072');
+ const viewer=await import('./staff-viewer.js?v=1.0073');
  await viewer.open({tab,material:m,metadata:meta(m),uid:S.user.uid,token:()=>A.user().getIdToken(),version:versionOf(m,meta(m)),
  onOpen:async()=>{S.progress[id]=await api('progress',{kind:'open',materialId:id})},
  onAck:async()=>{S.progress[id]=await api('progress',{kind:'ack',materialId:id,version:versionOf(m,meta(m))});home();await renderLibrary()},

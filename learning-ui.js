@@ -1,8 +1,8 @@
-// FLO Academy 1.0072: explicit navigation, no DOM polling.
+// FLO Academy 1.0073: explicit navigation, no DOM polling.
 (()=>{
  const $=id=>document.getElementById(id),pending=new Map();
  let profile=null,routed=false;
- const version=window.__FLO_RELEASE_VERSION__||'1.0072';
+ const version=window.__FLO_RELEASE_VERSION__||'1.0073';
  const names={team:'Команда',materials:'Материалы',learning:'Обучение',checks:'Чек-листы',tips:'Чаевые',inventory:'Инвентаризация',manage:'Управление обучением'};
  const specs=[['team','Люди FLO','Наши люди и общая работа'],['materials','База знаний','Обучение и стандарты'],['learning','Развитие','Маршруты, тесты и ознакомления'],['checks','Рабочий день','Чек-листы смены и история'],['tips','Команда','Расчёт и история распределений'],['inventory','Учёт','Бой посуды и инвентаризация'],['manage','Для управляющего','Маршруты, ознакомления и результаты']];
  function feature(name){
@@ -50,7 +50,12 @@
   const reviewer=profile.admin||profile.position==='Управляющий';
   for(const host of [$('employeeHomePanel'),$('floAdminHome')]){
    if(!host)continue;
-   host.innerHTML=specs.filter(([id])=>id!=='inventory'||manager).filter(([id])=>id!=='manage'||reviewer).map(([id,eyebrow,desc])=>'<a class="homeTile '+(id==='materials'?'materialsTile':'')+'" href="#flo='+id+'" target="_blank" rel="noopener"><span class="tileEyebrow">'+eyebrow+'</span><b>'+names[id]+'</b><span>'+desc+' <span aria-hidden="true">↗</span></span></a>').join('');
+   host.innerHTML=specs.filter(([id])=>id!=='inventory'||manager).filter(([id])=>id!=='manage'||reviewer).map(([id,eyebrow,desc])=>'<button type="button" class="homeTile '+(id==='materials'?'materialsTile':'')+'" data-flo-page="'+id+'"><span class="tileEyebrow">'+eyebrow+'</span><b>'+names[id]+'</b><span>'+desc+' <span aria-hidden="true">→</span></span></button>').join('');
+   host.querySelectorAll('[data-flo-page]').forEach(button=>button.onclick=()=>{
+    const name=button.dataset.floPage;
+    history.pushState({flo:name},'',location.pathname+'#flo='+name);
+    void open(name);
+   });
   }
   $('staffManage')?.classList.add('hidden');
   $('staffHome')?.querySelectorAll('.staffShelf [data-act]').forEach(b=>{if(b.dataset.act!=='saved')b.classList.add('hidden')});
@@ -59,6 +64,7 @@
  window.FLO_NAV={page,home,open,reset(){profile=null;routed=false;closePages();window.FLO_TIPS?.reset();window.FLO_INVENTORY?.reset()},ready(p){profile=p;render()}};
  window.addEventListener('flo-staff-ready',render);
  window.addEventListener('hashchange',()=>{const route=location.hash.match(/^#flo=(\w+)$/)?.[1];if(profile&&names[route])void open(route)});
+ window.addEventListener('popstate',()=>{const route=location.hash.match(/^#flo=(\w+)$/)?.[1];route&&profile&&names[route]?void open(route):home()});
  document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act="learning"],[data-act="close"]');
   if(!b)return;e.preventDefault();e.stopImmediatePropagation();b.dataset.act==='close'?home():hub();

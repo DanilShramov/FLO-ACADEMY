@@ -1,6 +1,6 @@
-// FLO Academy release 1.0072
+// FLO Academy release 1.0073
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0072';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0073';
   window.FLO_TIPS_VERSION=VERSION;
 
   const state={loaded:false,loadedAt:0,loading:false,user:null,team:[],rules:null,history:[],scope:'own'};
@@ -219,17 +219,9 @@
             <input type="checkbox" data-tip-person="${esc(person.id)}">
             <div><strong>${esc(person.name)}</strong><div class="tipsPersonMeta">${esc(person.position||'Официант')}</div></div>
           </div>
-          <div class="tipsExtras" style="margin-top:10px">
-            <label><input type="checkbox" data-tip-english disabled>Английский +0,25</label>
-            <label><input type="checkbox" data-tip-wine disabled>Винная карта +0,25</label>
-          </div>
         </div>
-        <label>Основной коэффициент
-          <select data-tip-base>
-            <option value="1">1,0 · Кухня</option>
-            <option value="2">2,0 · Бар</option>
-            <option value="3">3,0 · Сервис</option>
-          </select>
+        <label>Коэффициент официанта
+          <input data-tip-base type="number" inputmode="decimal" min="1" max="3.5" step="0.25" value="1" placeholder="От 1 до 3,5">
         </label>
         <label>Продолжительность
           <select data-tip-shift>
@@ -277,19 +269,12 @@
 
     host.querySelectorAll('[data-waiter]').forEach(row=>{
       const base=row.querySelector('[data-tip-base]');
-      const english=row.querySelector('[data-tip-english]');
-      const wine=row.querySelector('[data-tip-wine]');
       const sync=()=>{
-        const enabled=Number(base.value)===3;
-        english.disabled=!enabled; wine.disabled=!enabled;
-        if(!enabled){english.checked=false;wine.checked=false}
         $('tipsSave').disabled=true;
       };
-      base.onchange=sync;
+      base.oninput=sync;
       row.querySelector('[data-tip-shift]').onchange=()=>{$('tipsSave').disabled=true};
       row.querySelector('[data-tip-person]').onchange=()=>{$('tipsSave').disabled=true};
-      english.onchange=()=>{$('tipsSave').disabled=true};
-      wine.onchange=()=>{$('tipsSave').disabled=true};
       sync();
     });
     $('tipsCalculate').onclick=calculate;
@@ -301,8 +286,8 @@
       .map(row=>({
         id:row.dataset.waiter,
         baseCoefficient:Number(row.querySelector('[data-tip-base]').value),
-        english:row.querySelector('[data-tip-english]').checked,
-        wine:row.querySelector('[data-tip-wine]').checked,
+        english:false,
+        wine:false,
         shift:row.querySelector('[data-tip-shift]').value
       }));
   }
