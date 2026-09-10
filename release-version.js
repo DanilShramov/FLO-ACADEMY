@@ -5,7 +5,6 @@
   window.FLO_ACADEMY_VERSION=VERSION;
   window.FLO_TESTS_VERSION=VERSION;
   window.FLO_RESULTS_FILTER_VERSION=VERSION;
-  window.FLO_OVERVIEW_FIX_VERSION=VERSION;
 
   const apply=()=>{
     document.querySelectorAll('[data-app-version]').forEach(el=>{

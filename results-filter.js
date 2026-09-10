@@ -7,7 +7,7 @@
 
   function isManagerResultsHistory(url){
     try{
-      const u=new URL(typeof url==='string'?url:url?.url||'', window.location.href);
+      const u=new URL(typeof url==='string'?url:url?.url||'',window.location.href);
       return u.pathname.endsWith('/api/tests')
         && u.searchParams.get('action')==='history'
         && u.searchParams.get('all')==='1';
@@ -21,17 +21,16 @@
       || String(item?.testTitle||'').trim().toLowerCase()==='аттестация';
   }
 
-  function buildInput(originalInput, url){
+  function buildInput(originalInput,url){
     if(typeof originalInput==='string')return url.pathname+url.search;
-    try{return new Request(url.toString(), originalInput)}catch{return url.pathname+url.search}
+    try{return new Request(url.toString(),originalInput)}
+    catch{return url.pathname+url.search}
   }
 
   window.fetch=async function(input,init={}){
-    if(!isManagerResultsHistory(input)){
-      return previousFetch(input,init);
-    }
+    if(!isManagerResultsHistory(input))return previousFetch(input,init);
 
-    const base=new URL(typeof input==='string'?input:input.url, window.location.href);
+    const base=new URL(typeof input==='string'?input:input.url,window.location.href);
     let cursor=base.searchParams.get('cursor')||'';
     let collected=[];
     let finalCursor=null;
@@ -40,6 +39,7 @@
 
     while(loops<40){
       loops++;
+
       const u=new URL(base.toString());
       if(cursor)u.searchParams.set('cursor',cursor);
       else u.searchParams.delete('cursor');
@@ -48,7 +48,8 @@
       if(!response.ok)return response;
 
       let data;
-      try{data=await response.json()}catch{return response}
+      try{data=await response.json()}
+      catch{return response}
 
       serverNow=data.serverNow||serverNow;
       collected.push(...(Array.isArray(data.items)?data.items.filter(isAttestation):[]));
@@ -91,6 +92,7 @@
   }
 
   let scheduled=false;
+
   const scheduleUpdate=()=>{
     if(scheduled)return;
     scheduled=true;
