@@ -1,0 +1,46 @@
+/* FLO staff experience 1.0065 */
+:root{--staff-ink:#233a35;--staff-muted:#65746e;--staff-line:#dce4de;--staff-bg:#f4f6f2}
+button,input,select,textarea{font:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #3b8475;outline-offset:3px}
+button{min-height:44px}button:disabled{opacity:.6;cursor:wait}
+body{line-height:1.5}
+.staffHero{background:var(--staff-ink);color:#fff;border-radius:20px;padding:28px;margin:18px 0}
+.staffHero p{color:#e0e9e4}.staffHero button{background:#fff;color:var(--staff-ink);border:0}
+.staffStats,.staffGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0}
+.staffStats>div{padding:18px;background:var(--staff-bg);border-radius:14px}
+.staffStats strong{display:block;font-size:26px;color:var(--staff-ink)}
+.staffStats small{color:var(--staff-muted)}
+.staffCard{border:1px solid var(--staff-line);border-radius:16px;padding:20px;background:#fff;margin:12px 0;min-width:0}
+.staffCard h3{font-size:19px;margin:8px 0}.staffCard p{margin:8px 0}
+.staffRow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.staffRow>*{min-width:0}.staffRow label{flex:1}
+.staffActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.staffActions button{padding:9px 14px;border-radius:10px}
+.staffMuted{color:var(--staff-muted);font-size:14px}
+.staffBadge{display:inline-block;font-size:12px;font-weight:600;padding:5px 9px;border-radius:99px;background:#e9efeb;color:#354f43;margin:3px 4px 3px 0}
+.staffBadge.new{background:#e8edf9;color:#374c84}.staffBadge.done{background:#dfeee5;color:#265640}.staffBadge.pending{background:#fff0d5;color:#73521c}
+.staffBadge.repeat{background:#fae7e2;color:#8a402d}
+.staffIcon{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e5ece7;color:#244a3b;font-size:12px;font-weight:700;letter-spacing:.5px}
+.staffPanel{width:min(980px,96vw);max-height:92dvh;border:0;border-radius:20px;padding:0;color:var(--staff-ink);box-shadow:0 20px 100px #0003}
+.staffPanel::backdrop{background:#16282099}
+.staffPanel header{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:18px 22px;background:var(--staff-bg);position:sticky;top:0;z-index:2;border-bottom:1px solid var(--staff-line)}
+.staffPanel header h2{font-size:20px;margin:0}.staffPanel main{padding:20px 24px}
+.staffPanel input:not([type=checkbox]),.staffPanel select,.staffPanel textarea{box-sizing:border-box;display:block;width:100%;padding:11px;border:1px solid #c5d2c9;border-radius:9px;background:#fff;color:#233a35}
+.staffPanel label{display:block;margin:12px 0;font-size:14px}
+.staffPanel label input[type=checkbox]{width:auto;min-width:20px;height:20px;margin-right:8px;vertical-align:middle}
+.staffPanel textarea{min-height:95px;resize:vertical}
+.staffPanel summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+.staffPanel progress{accent-color:#386951;width:100%;height:9px}
+.staffCheck{padding:12px;border-bottom:1px solid var(--staff-line)}
+.staffEmpty{padding:26px;text-align:center;border:1px dashed #aabcae;border-radius:16px;color:var(--staff-muted)}
+.staffToast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:99999;background:#263e34;color:#fff;padding:12px 18px;border-radius:12px;max-width:90vw}
+.staffError{padding:16px;border:1px solid #d9ada3;background:#fff3ef;border-radius:12px}
+.staffTableWrap{overflow:auto}.staffTable{width:100%;border-collapse:collapse;font-size:14px}
+.staffTable th,.staffTable td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid var(--staff-line)}
+.staffTable th{background:var(--staff-bg)}
+.staffShelf{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.staffSkeleton{height:120px;border-radius:16px;background:linear-gradient(90deg,#edf1ec,#f9faf7,#edf1ec);background-size:200%;animation:staffPulse 1.6s infinite}
+@keyframes staffPulse{to{background-position:-200%}}
+@media(prefers-reduced-motion:reduce){.staffSkeleton{animation:none}}
+@media(max-width:600px){.staffPanel{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0}.staffPanel main{padding:16px}.staffHero{padding:20px}.staffStats{grid-template-columns:repeat(3,1fr);gap:6px}.staffStats>div{padding:10px}.staffStats strong{font-size:21px}.staffStats small{font-size:12px}.staffGrid{grid-template-columns:1fr}.staffTable th,.staffTable td{padding:8px}.homeTile{padding:20px!important}.employeeNav button{min-height:44px!important}}
+

@@ -1,6 +1,6 @@
-// FLO Academy release 1.0064
+// FLO Academy release 1.0065
 (()=>{
-  const RELEASE_VERSION=window.__FLO_RELEASE_VERSION__||'1.0064';
+  const RELEASE_VERSION=window.__FLO_RELEASE_VERSION__||'1.0065';
   window.FLO_RESULTS_FILTER_VERSION=RELEASE_VERSION;
 
   const previousFetch=window.fetch.bind(window);
@@ -112,3 +112,4 @@
     new MutationObserver(scheduleUpdate).observe(document.body,{subtree:true,childList:true});
   }
 })();
+
