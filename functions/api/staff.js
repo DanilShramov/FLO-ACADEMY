@@ -46,6 +46,20 @@ async function subPage(store,uid,sub,cursor=null){
  return {items:rows.slice(0,25),cursor:rows.length>25?rows[24].id:null};
 }
 async function config(store){const rec=await store.get(CONFIG);return {data:{...emptyConfig(),...rec?.data},revision:rec?.updateTime||null,rec}}
+function teamWithEmployees(configured,records){
+ const team=Array.isArray(configured)?configured.map(x=>({...x})):[],used=new Set();
+ const employees=records.filter(x=>x.data?.active!==false&&x.data?.name);
+ for(const record of employees){
+  const d=record.data,uid=record.id,email=String(d.email||'').trim().toLowerCase(),name=String(d.name||'').trim();
+  let index=team.findIndex((x,i)=>!used.has(i)&&(x.uid===uid||(email&&String(x.email||'').trim().toLowerCase()===email)||String(x.name||'').trim().toLowerCase()===name.toLowerCase()));
+  const old=index>=0?team[index]:{};
+  const row={...old,id:old.id||'employee_'+uid,uid,email:d.email||'',employeeManaged:true,name,role:d.position||'',phone:d.phone||'',birthday:d.birthday||'',contact:d.phone||old.contact||'',zone:old.zone||'',active:true};
+  if(index<0){team.push(row);index=team.length-1}else team[index]=row;
+  used.add(index);
+ }
+ const active=new Set(employees.map(x=>x.id));
+ return team.filter(x=>x.active!==false&&!(x.employeeManaged===true&&x.uid&&!active.has(x.uid)));
+}
 async function library(store){const [sections,items]=await Promise.all([store.list('materialSections'),store.list('materialItems')]);return {sections:sections.map(r=>({...r.data,id:r.path.split('/').pop()})),items:items.map(r=>({...r.data,id:r.path.split('/').pop()}))}}
 async function userProgress(store,uid){const rows=await store.list(ownPath(uid,'progress'));return Object.fromEntries(rows.map(r=>[r.data.materialId,r.data]))}
 function checkConfig(c){
@@ -64,8 +78,9 @@ export async function onRequest({request,env}){
  let body={};if(request.method==='POST'){const text=await request.text();if(text.length>350000)fail(413,'Слишком большой запрос.');try{body=JSON.parse(text)}catch{fail(400,'Не удалось прочитать запрос.')}}
  if(['config-save','progress','check','feedback-save'].includes(action)&&request.method!=='POST')fail(405,'Нужно сохранить данные.');
  if(action==='bootstrap'){
-   const [conf,progress,checks,feedback]=await Promise.all([config(store),userProgress(store,user.uid),store.list(ownPath(user.uid,'checks')),store.list(ownPath(user.uid,'feedback'))]);
-   return json({user,config:conf.data,configRevision:conf.revision,progress,checks:checks.map(x=>x.data),feedback:feedback.map(x=>x.data),serverNow:Date.now()});
+   const [conf,progress,checks,feedback,employees]=await Promise.all([config(store),userProgress(store,user.uid),store.list(ownPath(user.uid,'checks')),store.list(ownPath(user.uid,'feedback')),store.list('employees')]);
+   const hydrated={...conf.data,team:teamWithEmployees(conf.data.team,employees)};
+   return json({user,config:hydrated,configRevision:conf.revision,progress,checks:checks.map(x=>x.data),feedback:feedback.map(x=>x.data),serverNow:Date.now()});
  }
  if(action==='config-save'){
    reviewer(user);checkConfig(body.config);const prev=await config(store);
@@ -104,10 +119,9 @@ export async function onRequest({request,env}){
  if(action==='check-history'){const uid=u.searchParams.get('uid')||user.uid;if(uid!==user.uid)reviewer(user);return json(await subPage(store,safeId(uid),'checkEvents',u.searchParams.get('cursor')))}
  if(action==='report'){
    reviewer(user);const page=await queryRows(store,'users',{size:10,cursor:u.searchParams.get('cursor')});
-   const rows=await Promise.all(page.items.filter(x=>x.active!==false).map(async p=>{
-     const [progress,tests]=await Promise.all([userProgress(store,p.id),attemptsPage(store,p.id).catch(()=>({items:[],unavailable:true}))]);
-     return {uid:p.id,name:p.name||p.email||p.id,position:p.position||'',progress,tests};
-   }));
+   const rows=await Promise.all(page.items.filter(x=>x.active!==false).map(async p=>({
+     uid:p.id,name:p.name||p.email||p.id,position:p.position||'',progress:await userProgress(store,p.id),tests:{items:[],deferred:true}
+   })));
    return json({items:rows,cursor:page.cursor});
  }
  if(action==='attempts'){
