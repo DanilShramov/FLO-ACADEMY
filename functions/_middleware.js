@@ -1,5 +1,5 @@
-// FLO Academy release 1.0069
-const RELEASE_VERSION='1.0069';
+// FLO Academy release 1.0071
+const RELEASE_VERSION='1.0071';
 
 export async function onRequest(context){
   const response=await context.next();
@@ -17,7 +17,7 @@ export async function onRequest(context){
     /<script>\s*window\.__FLO_RELEASE_VERSION__\s*=\s*["'][^"']+["'];?\s*<\/script>\s*/g,''
   );
   text=text.replace(
-    /<script\s+src=["']\/(?:test-upgrade|results-filter|release-version|learning-ui|tips|inventory)\.js\?v=[^"']+["']><\/script>\s*/g,''
+    /<script\s+src=["']\/(?:test-upgrade|results-filter|release-version|learning-ui|tips|inventory|employee-team)\.js\?v=[^"']+["']><\/script>\s*/g,''
   );
   text=text.replace(
     /const\s+APP_VERSION\s*=\s*["'][^"']+["']\s*;/,
@@ -43,12 +43,11 @@ export async function onRequest(context){
   );
 
   const scripts=`<script>window.__FLO_RELEASE_VERSION__="${RELEASE_VERSION}";</script>
+<script src="/learning-ui.js?v=${RELEASE_VERSION}"></script>
+<script src="/release-version.js?v=${RELEASE_VERSION}"></script>
 <script src="/test-upgrade.js?v=${RELEASE_VERSION}"></script>
 <script src="/results-filter.js?v=${RELEASE_VERSION}"></script>
-<script src="/release-version.js?v=${RELEASE_VERSION}"></script>
-<script src="/tips.js?v=${RELEASE_VERSION}"></script>
-<script src="/inventory.js?v=${RELEASE_VERSION}"></script>
-<script src="/learning-ui.js?v=${RELEASE_VERSION}"></script>
+<script src="/employee-team.js?v=${RELEASE_VERSION}"></script>
 <script type="module">`;
 
   const injected=text.replace('<script type="module">',scripts);
