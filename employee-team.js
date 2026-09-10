@@ -1,6 +1,6 @@
-// FLO Academy release 1.0071
+// FLO Academy release 1.0072
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0071';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0072';
   window.FLO_EMPLOYEE_TEAM_VERSION=VERSION;
 
   const $=id=>document.getElementById(id);
@@ -99,7 +99,7 @@
     }catch(e){
       if(!silent){
         const msg=$('employeeMsg')||$('formMsg');
-        if(msg)msg.innerHTML=`<div class="notice error">${String(e.message||e)}</div>`;
+        if(msg)msg.textContent=String(e.message||e);
       }
     }finally{
       syncing=false;
@@ -124,7 +124,7 @@
     }catch(e){
       const msg=$('formMsg');
       if(msg){
-        msg.innerHTML=`<div class="notice error">Сотрудник создан, но команду не удалось обновить: ${String(e.message||e)}. Откройте список сотрудников ещё раз — синхронизация повторится.</div>`;
+        msg.textContent='Сотрудник создан, но команду не удалось обновить: '+String(e.message||e);
       }
     }
   }
@@ -172,24 +172,16 @@
       setTimeout(()=>void syncAll(true),150);
     }
 
-    if(e.target.closest('.del')){
-      setTimeout(()=>void syncAll(true),1700);
-    }
+
   },true);
 
+  window.addEventListener("flo-employees-changed",()=>void syncAll(false));
   function boot(){
     ensureFields();
     captureNewEmployee();
     watchSuccess();
 
-    const list=$('employeeList');
-    if(list){
-      new MutationObserver(()=>{
-        if(!$('employeesView')?.classList.contains('hidden')){
-          void syncAll(true);
-        }
-      }).observe(list,{subtree:true,childList:true});
-    }
+
   }
 
   if(document.readyState==='loading'){

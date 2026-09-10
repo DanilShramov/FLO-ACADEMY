@@ -1,6 +1,6 @@
-// FLO Academy release 1.0065
+// FLO Academy release 1.0072
 (()=>{
-  const RELEASE_VERSION=window.__FLO_RELEASE_VERSION__||'1.0065';
+  const RELEASE_VERSION=window.__FLO_RELEASE_VERSION__||'1.0072';
   window.FLO_RESULTS_FILTER_VERSION=RELEASE_VERSION;
 
   const previousFetch=window.fetch.bind(window);
@@ -105,11 +105,11 @@
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',()=>{
       updateResultsView();
-      new MutationObserver(scheduleUpdate).observe(document.body,{subtree:true,childList:true});
+      new MutationObserver(scheduleUpdate).observe(document.getElementById("testsView")||document.body,{subtree:true,childList:true});
     },{once:true});
   }else{
     updateResultsView();
-    new MutationObserver(scheduleUpdate).observe(document.body,{subtree:true,childList:true});
+    new MutationObserver(scheduleUpdate).observe(document.getElementById("testsView")||document.body,{subtree:true,childList:true});
   }
 })();
 

@@ -1,6 +1,6 @@
-// FLO Academy release 1.0071
+// FLO Academy release 1.0072
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0071';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0072';
   window.FLO_INVENTORY_VERSION=VERSION;
 
   const state={allowed:null,loaded:false,loading:false,breakage:[],counts:[],cycle:null,user:null};
@@ -22,13 +22,14 @@
   }
 
   async function api(action,body=null){
-    const t=await token();
+    if(body&&action.endsWith('-save')){const key=JSON.stringify(body);if(state.saveKey!==key){state.saveKey=key;state.requestId=crypto.randomUUID()}body={...body,requestId:state.requestId}}
+    const generation=state.generation||0;const t=await token();
     const response=await fetch('/api/inventory?'+new URLSearchParams({action}),{
       method:body?'POST':'GET',
       headers:{Authorization:'Bearer '+t,...(body?{'Content-Type':'application/json'}:{})},
-      ...(body?{body:JSON.stringify(body)}:{})
+      ...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)
     });
-    let data={};try{data=await response.json()}catch{}
+    if(generation!==(state.generation||0))throw Error('Аккаунт изменился.');let data={};try{data=await response.json()}catch{}
     if(!response.ok)throw Error(data.error||'Не удалось выполнить действие.');
     return data;
   }
@@ -38,9 +39,7 @@
     try{
       const data=await api('permission');
       state.allowed=!!data.allowed;
-    }catch{
-      state.allowed=false;
-    }
+    }catch(e){state.allowed=null;throw e}
     return state.allowed;
   }
 
@@ -98,7 +97,7 @@
         <section id="invHistory" class="hidden"></section>
       </main>
     `;
-    $('invClose').onclick=()=>d.close();
+    d.querySelector('#invClose').onclick=()=>d.close();
     d.querySelectorAll('[data-inv-tab]').forEach(b=>b.onclick=()=>selectTab(b.dataset.invTab));
     document.body.appendChild(d);
     return d;
@@ -106,7 +105,7 @@
 
   function message(text,type=''){
     const box=$('invMessage');if(!box)return;
-    box.innerHTML=text?`<div class="notice ${type}">${esc(text)}</div>`:'';
+    box.innerHTML=text?`<div class="notice ${type}">${esc(text)}</div>`:'';if(type==='error'){const b=document.createElement('button');b.className='secondary';b.textContent='Обновить данные';b.onclick=()=>load(true);box.append(b)}
   }
 
   function selectTab(tab){
@@ -237,7 +236,7 @@
         eventDate:$('invBreakDate').value,category:$('invBreakCategory').value,
         item,quantity,note:$('invBreakNote').value.trim()
       });
-      await load(true);selectTab('breakage');message('Бой сохранён.','ok');
+      state.loaded=false;await load(true);if(state.loaded){state.saveKey=null;selectTab('history');message('Бой сохранён в истории.','ok')}
     }catch(e){message(e.message,'error')}
     finally{if($('invBreakSave'))$('invBreakSave').disabled=false}
   }
@@ -255,7 +254,7 @@
       await api('count-save',{
         inventoryDate:$('invCountDate').value,lines,note:$('invCountNote').value.trim()
       });
-      await load(true);selectTab('history');message('Инвентаризация сохранена.','ok');
+      state.loaded=false;await load(true);if(state.loaded){state.saveKey=null;selectTab('history');message('Инвентаризация сохранена в истории.','ok')}
     }catch(e){message(e.message,'error')}
     finally{if($('invCountSave'))$('invCountSave').disabled=false}
   }
@@ -281,13 +280,13 @@
   }
 
   async function open(){
-    if(!(await canAccess()))return;
+    if(!(await canAccess()))throw Error('Инвентаризация доступна менеджерам и выше.');
     styles();
     const d=dialog();
-    if(!d.open)d.showModal();
+    if(!d.open)window.FLO_NAV?window.FLO_NAV.page(d):d.showModal();
     selectTab('breakage');
-    await load(true);
+    await load(false);
   }
 
-  window.FLO_INVENTORY={open,canAccess};
+  window.FLO_INVENTORY={open,canAccess,reset(){state.generation=(state.generation||0)+1;Object.assign(state,{allowed:null,loaded:false,loading:false,user:null,breakage:[],counts:[],cycle:null});$('floInventoryDialog')?.remove()}};
 })();

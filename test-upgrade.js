@@ -1,5 +1,5 @@
-// FLO Academy release 1.0065
-window.FLO_TESTS_VERSION=window.__FLO_RELEASE_VERSION__||'1.0065';
+// FLO Academy release 1.0072
+window.FLO_TESTS_VERSION=window.__FLO_RELEASE_VERSION__||'1.0072';
 
 (()=>{
   let mode='practice';
@@ -287,7 +287,7 @@ window.FLO_TESTS_VERSION=window.__FLO_RELEASE_VERSION__||'1.0065';
     const headers=new Headers(response.headers);
     headers.delete('content-length');
     headers.set('Cache-Control','no-store');
-    headers.set('X-FLO-Version','1.0065');
+    headers.set('X-FLO-Version','1.0072');
 
     return new Response(JSON.stringify(data),{
       status:response.status,

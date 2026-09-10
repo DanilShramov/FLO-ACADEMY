@@ -1,6 +1,6 @@
-// FLO Academy release 1.0071
+// FLO Academy release 1.0072
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0071';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0072';
   window.FLO_TIPS_VERSION=VERSION;
 
   const state={loaded:false,loadedAt:0,loading:false,user:null,team:[],rules:null,history:[],scope:'own'};
@@ -34,13 +34,13 @@
   }
 
   async function api(action,body=null){
-    const t=await token();
+    const generation=state.generation||0;const t=await token();
     const response=await fetch('/api/tips?'+new URLSearchParams({action}),{
       method:body?'POST':'GET',
       headers:{Authorization:'Bearer '+t,...(body?{'Content-Type':'application/json'}:{})},
-      ...(body?{body:JSON.stringify(body)}:{})
+      ...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)
     });
-    let data={};
+    if(generation!==(state.generation||0))throw Error('Аккаунт изменился.');let data={};
     try{data=await response.json()}catch{}
     if(!response.ok)throw Error(data.error||'Не удалось выполнить действие.');
     return data;
@@ -111,7 +111,7 @@
         <section id="tipsCalculator" class="hidden"></section>
       </main>
     `;
-    $('tipsClose').onclick=()=>d.close();
+    d.querySelector('#tipsClose').onclick=()=>d.close();
     d.querySelectorAll('[data-tips-tab]').forEach(b=>b.onclick=()=>selectTab(b.dataset.tipsTab));
     document.body.appendChild(d);
     return d;
@@ -120,7 +120,7 @@
   function message(text,type=''){
     const box=$('tipsMessage');
     if(!box)return;
-    box.innerHTML=text?`<div class="notice ${type}">${esc(text)}</div>`:'';
+    box.innerHTML=text?`<div class="notice ${type}">${esc(text)}</div>`:'';if(type==='error'){const b=document.createElement('button');b.className='secondary';b.textContent='Обновить данные';b.onclick=()=>load(true);box.append(b)}
   }
 
   function selectTab(tab){
@@ -396,7 +396,7 @@
     const d=dialog();
 
     if(!d.open){
-      try{d.showModal()}
+      try{window.FLO_NAV?window.FLO_NAV.page(d):d.showModal()}
       catch{d.setAttribute('open','')}
     }
 
@@ -406,5 +406,5 @@
     void load(false);
   }
 
-  window.FLO_TIPS={open,refresh:()=>load(true)};
+  window.FLO_TIPS={open,refresh:()=>load(true),reset(){state.generation=(state.generation||0)+1;Object.assign(state,{loaded:false,loading:false,user:null,team:[],history:[],scope:'own'});$('floTipsDialog')?.remove()}};
 })();
