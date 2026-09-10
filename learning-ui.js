@@ -1,8 +1,67 @@
-// FLO Academy release 1.0069
+// FLO Academy release 1.0071
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0069';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0071';
   window.FLO_LEARNING_UI_VERSION=VERSION;
+
   const $=id=>document.getElementById(id);
+  const featurePromises=new Map();
+  let inventoryAllowed=false;
+  let inventoryChecked=false;
+
+  const featureInfo={
+    tips:{global:'FLO_TIPS',src:`/tips.js?v=${encodeURIComponent(VERSION)}`},
+    inventory:{global:'FLO_INVENTORY',src:`/inventory.js?v=${encodeURIComponent(VERSION)}`}
+  };
+
+  function loadFeature(name){
+    const info=featureInfo[name];
+    if(!info)return Promise.reject(new Error('Модуль не найден.'));
+    if(window[info.global])return Promise.resolve(window[info.global]);
+    if(featurePromises.has(name))return featurePromises.get(name);
+
+    const promise=new Promise((resolve,reject)=>{
+      const existing=document.querySelector(`script[data-flo-feature="${name}"]`);
+      const script=existing||document.createElement('script');
+
+      const done=()=>{
+        const api=window[info.global];
+        if(api)resolve(api);
+        else reject(new Error('Модуль загрузился, но не запустился.'));
+      };
+
+      if(existing){
+        if(window[info.global])resolve(window[info.global]);
+        else{
+          existing.addEventListener('load',done,{once:true});
+          existing.addEventListener('error',()=>reject(new Error('Не удалось загрузить раздел.')),{once:true});
+        }
+        return;
+      }
+
+      script.src=info.src;
+      script.async=true;
+      script.dataset.floFeature=name;
+      script.addEventListener('load',done,{once:true});
+      script.addEventListener('error',()=>reject(new Error('Не удалось загрузить раздел.')),{once:true});
+      document.head.appendChild(script);
+    }).catch(err=>{
+      featurePromises.delete(name);
+      throw err;
+    });
+
+    featurePromises.set(name,promise);
+    return promise;
+  }
+
+  async function openFeature(name){
+    try{
+      const api=await loadFeature(name);
+      if(!api?.open)throw new Error('Раздел временно недоступен.');
+      await api.open();
+    }catch(err){
+      alert((name==='tips'?'Чаевые':'Инвентаризация')+': '+(err?.message||'не удалось открыть раздел'));
+    }
+  }
 
   function runStaffAction(action,direct=false){
     const b=document.createElement('button');
@@ -17,6 +76,13 @@
 
   function tileMarkup(eyebrow,title,description){
     return `<span class="tileEyebrow">${eyebrow}</span><b>${title}</b><span>${description} <span aria-hidden="true">↗</span></span>`;
+  }
+
+  function setMarkup(el,signature,html){
+    if(!el)return;
+    if(el.dataset.floSignature===signature)return;
+    el.dataset.floSignature=signature;
+    el.innerHTML=html;
   }
 
   function ensureStyles(){
@@ -46,7 +112,6 @@
       #floLearningHub .floLearningCard span{color:var(--staff-muted,#65746e);font-size:14px}
       #staffFastHome{position:relative}
       #staffFastHome .staffHero{margin-top:0}
-
       #employeeChecksTile,#employeeTipsTile,#employeeManageLearningTile,#employeeInventoryTile,
       #adminChecksTile,#adminTipsTile,#adminInventoryTile,#staffManage{
         background:#e9eddf;
@@ -71,14 +136,10 @@
     document.head.appendChild(style);
   }
 
-  function closeHub(){
-    const d=$('floLearningHub');
-    if(d?.open)d.close();
-  }
-
   function ensureHub(){
     let d=$('floLearningHub');
     if(d)return d;
+
     d=document.createElement('dialog');
     d.id='floLearningHub';
     d.className='staffPanel';
@@ -106,15 +167,17 @@
         </div>
       </main>
     `;
-    d.querySelector('[data-hub-close]').onclick=closeHub;
+
+    d.querySelector('[data-hub-close]').onclick=()=>d.close();
     d.querySelectorAll('[data-hub-action]').forEach(b=>{
       b.onclick=()=>{
         const action=b.dataset.hubAction;
-        closeHub();
+        d.close();
         if(action==='learning')runStaffAction('learning',true);
         else runStaffAction(action);
       };
     });
+
     document.body.appendChild(d);
     return d;
   }
@@ -127,14 +190,24 @@
 
   function renameLearningTiles(){
     const employee=$('employeeTestsTile');
-    if(employee)employee.innerHTML=tileMarkup('Развитие','Обучение','Маршруты, тесты и ознакомления');
+    setMarkup(
+      employee,
+      'employee-learning',
+      tileMarkup('Развитие','Обучение','Маршруты, тесты и ознакомления')
+    );
+
     const admin=$('openTestsBtn');
-    if(admin)admin.innerHTML='<b>Обучение</b><span>Маршруты, тесты и ознакомления →</span>';
+    setMarkup(
+      admin,
+      'admin-learning',
+      '<b>Обучение</b><span>Маршруты, тесты и ознакомления →</span>'
+    );
   }
 
   function ensureEmployeeTile(id,eyebrow,title,description,action){
     const host=$('employeeHomePanel');
     if(!host)return null;
+
     let tile=$(id);
     if(!tile){
       tile=document.createElement('button');
@@ -143,23 +216,16 @@
       tile.className='homeTile';
       host.appendChild(tile);
     }
-    tile.innerHTML=tileMarkup(eyebrow,title,description);
-    if(action==='tips'){
-      tile.onclick=()=>window.FLO_TIPS?.open();
-      delete tile.dataset.act;
-    }else if(action==='inventory'){
-      tile.onclick=()=>window.FLO_INVENTORY?.open();
-      delete tile.dataset.act;
-    }else{
-      tile.onclick=null;
-      tile.dataset.act=action;
-    }
+
+    setMarkup(tile,`${id}-${title}`,tileMarkup(eyebrow,title,description));
+    tile.dataset.floAction=action;
     return tile;
   }
 
   function ensureAdminTile(id,title,description,action){
     const grid=$('adminView')?.querySelector('.grid');
     if(!grid)return null;
+
     let tile=$(id);
     if(!tile){
       tile=document.createElement('button');
@@ -168,31 +234,28 @@
       tile.className='tile tileButton';
       grid.appendChild(tile);
     }
-    tile.innerHTML=`<b>${title}</b><span>${description} →</span>`;
-    if(action==='tips'){
-      tile.onclick=()=>window.FLO_TIPS?.open();
-      delete tile.dataset.act;
-    }else if(action==='inventory'){
-      tile.onclick=()=>window.FLO_INVENTORY?.open();
-      delete tile.dataset.act;
-    }else{
-      tile.onclick=null;
-      tile.dataset.act=action;
-    }
+
+    setMarkup(tile,`${id}-${title}`,`<b>${title}</b><span>${description} →</span>`);
+    tile.dataset.floAction=action;
     return tile;
   }
 
-  function moveManageToMain(){
+  function manageTile(){
     const manage=$('staffManage');
     if(!manage)return;
+
     const adminVisible=$('adminView')&&!$('adminView').classList.contains('hidden');
     const employeeVisible=$('employeeView')&&!$('employeeView').classList.contains('hidden');
 
     if(adminVisible){
       const grid=$('adminView')?.querySelector('.grid');
       if(grid&&manage.parentElement!==grid)grid.appendChild(manage);
-      manage.className='tile tileButton';
-      manage.innerHTML='<b>Управление обучением</b><span>Маршруты, ознакомления и настройки →</span>';
+      if(manage.className!=='tile tileButton')manage.className='tile tileButton';
+      setMarkup(
+        manage,
+        'admin-manage-learning',
+        '<b>Управление обучением</b><span>Маршруты, ознакомления и настройки →</span>'
+      );
       manage.style.margin='';
     }
 
@@ -211,9 +274,11 @@
   function cleanSmallHomeButtons(){
     const home=$('staffHome');
     if(!home)return;
+
     $('staffFastHome')?.remove();
     const shelf=home.querySelector('.staffShelf');
     if(!shelf)return;
+
     shelf.querySelectorAll('button').forEach(b=>{
       if(['learning','events','checks','manage'].includes(b.dataset.act))b.remove();
     });
@@ -223,6 +288,7 @@
     if($('staffHome')||$('staffFastHome'))return;
     const host=$('employeeHomePanel');
     if(!host)return;
+
     const fast=document.createElement('div');
     fast.id='staffFastHome';
     fast.innerHTML=`
@@ -237,49 +303,62 @@
     host.before(fast);
   }
 
-  let inventoryPermissionRequested=false;
-  let inventoryAllowed=false;
-
-  async function syncInventoryPermission(){
-    if(inventoryPermissionRequested)return;
-    inventoryPermissionRequested=true;
-    try{
-      inventoryAllowed=await window.FLO_INVENTORY?.canAccess?.();
-    }catch{
-      inventoryAllowed=false;
-    }
-    const employee=$('employeeInventoryTile');
-    if(employee)employee.classList.toggle('hidden',!inventoryAllowed);
-    const admin=$('adminInventoryTile');
-    if(admin)admin.classList.toggle('hidden',!inventoryAllowed);
-  }
-
   function buildMain(){
-    ensureEmployeeTile('employeeChecksTile','Рабочий день','Чек-листы','Чек-листы смены и отметки выполнения','checks');
-    ensureEmployeeTile('employeeTipsTile','Команда','Чаевые','Расчёт и история распределений','tips');
+    ensureEmployeeTile(
+      'employeeChecksTile','Рабочий день','Чек-листы',
+      'Чек-листы смены и отметки выполнения','checks'
+    );
+    ensureEmployeeTile(
+      'employeeTipsTile','Команда','Чаевые',
+      'Расчёт и история распределений','tips'
+    );
 
     const employeeInventory=ensureEmployeeTile(
-      'employeeInventoryTile',
-      'Учёт',
-      'Инвентаризация',
-      'Бой посуды и шестинедельная инвентаризация',
-      'inventory'
+      'employeeInventoryTile','Учёт','Инвентаризация',
+      'Бой посуды и шестинедельная инвентаризация','inventory'
     );
     if(employeeInventory)employeeInventory.classList.toggle('hidden',!inventoryAllowed);
 
-    ensureAdminTile('adminChecksTile','Чек-листы','Чек-листы смены и отметки выполнения','checks');
-    ensureAdminTile('adminTipsTile','Чаевые','Расчёт и история распределений','tips');
+    ensureAdminTile(
+      'adminChecksTile','Чек-листы',
+      'Чек-листы смены и отметки выполнения','checks'
+    );
+    ensureAdminTile(
+      'adminTipsTile','Чаевые',
+      'Расчёт и история распределений','tips'
+    );
 
     const adminInventory=ensureAdminTile(
-      'adminInventoryTile',
-      'Инвентаризация',
-      'Бой посуды и шестинедельная инвентаризация',
-      'inventory'
+      'adminInventoryTile','Инвентаризация',
+      'Бой посуды и шестинедельная инвентаризация','inventory'
     );
     if(adminInventory)adminInventory.classList.toggle('hidden',!inventoryAllowed);
 
-    moveManageToMain();
-    syncInventoryPermission();
+    manageTile();
+  }
+
+  async function checkInventoryPermission(){
+    if(inventoryChecked)return inventoryAllowed;
+    inventoryChecked=true;
+
+    try{
+      const api=await loadFeature('inventory');
+      inventoryAllowed=!!(await api.canAccess?.());
+    }catch{
+      inventoryAllowed=false;
+    }
+
+    $('employeeInventoryTile')?.classList.toggle('hidden',!inventoryAllowed);
+    $('adminInventoryTile')?.classList.toggle('hidden',!inventoryAllowed);
+    return inventoryAllowed;
+  }
+
+  function normalize(){
+    ensureStyles();
+    renameLearningTiles();
+    cleanSmallHomeButtons();
+    if(!$('staffHome'))ensureFastHome();
+    buildMain();
   }
 
   document.addEventListener('click',e=>{
@@ -289,6 +368,25 @@
       e.stopImmediatePropagation();
       openHub();
       return;
+    }
+
+    const featureTile=e.target.closest('[data-flo-action]');
+    if(featureTile){
+      const action=featureTile.dataset.floAction;
+
+      if(action==='tips'){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        void openFeature('tips');
+        return;
+      }
+
+      if(action==='inventory'){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        void openFeature('inventory');
+        return;
+      }
     }
 
     const learning=e.target.closest('[data-act="learning"]');
@@ -311,21 +409,32 @@
     }
   },true);
 
-  let scheduled=false;
-  function normalize(){
-    scheduled=false;
-    ensureStyles();
-    renameLearningTiles();
-    cleanSmallHomeButtons();
-    if(!$('staffHome'))ensureFastHome();
-    buildMain();
-  }
-  function schedule(){
-    if(scheduled)return;
-    scheduled=true;
-    requestAnimationFrame(normalize);
+  /*
+    Главное изменение 1.0071:
+    раньше MutationObserver запускал normalize() после каждого изменения DOM,
+    а normalize() снова переписывал innerHTML плиток. Получался постоянный
+    цикл перерисовки. Теперь стартовая отрисовка выполняется сразу, а
+    дополнительные проверки ограничены несколькими моментами загрузки.
+  */
+  function boot(){
+    normalize();
+
+    [80,250,700,1500,3000,6000].forEach(ms=>{
+      setTimeout(normalize,ms);
+    });
+
+    // Инвентаризация проверяет доступ отдельно и асинхронно, не тормозя остальные плитки.
+    setTimeout(()=>void checkInventoryPermission(),350);
+
+    window.addEventListener('pageshow',normalize);
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden)normalize();
+    });
   }
 
-  normalize();
-  new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true});
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',boot,{once:true});
+  }else{
+    boot();
+  }
 })();

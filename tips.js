@@ -1,9 +1,9 @@
-// FLO Academy release 1.0069
+// FLO Academy release 1.0071
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0069';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0071';
   window.FLO_TIPS_VERSION=VERSION;
 
-  const state={loaded:false,loading:false,user:null,team:[],rules:null,history:[],scope:'own'};
+  const state={loaded:false,loadedAt:0,loading:false,user:null,team:[],rules:null,history:[],scope:'own'};
   const $=id=>document.getElementById(id);
 
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({
@@ -360,6 +360,7 @@
 
   function apply(data){
     state.loaded=true;
+    state.loadedAt=Date.now();
     state.user=data.user||null;
     state.team=Array.isArray(data.team)?data.team:[];
     state.rules=data.rules||null;
@@ -375,19 +376,34 @@
 
   async function load(force=false){
     if(state.loading)return;
-    if(state.loaded&&!force)return;
-    state.loading=true; message('Загрузка…');
-    try{apply(await api('bootstrap'));message('')}
-    catch(e){message(e.message,'error')}
-    finally{state.loading=false}
+    if(state.loaded&&!force&&Date.now()-state.loadedAt<30000)return;
+
+    state.loading=true;
+    if(!state.loaded)message('Загрузка…');
+
+    try{
+      apply(await api('bootstrap'));
+      message('');
+    }catch(e){
+      message(e.message,'error');
+    }finally{
+      state.loading=false;
+    }
   }
 
   async function open(){
     styles();
     const d=dialog();
-    if(!d.open)d.showModal();
+
+    if(!d.open){
+      try{d.showModal()}
+      catch{d.setAttribute('open','')}
+    }
+
     selectTab('history');
-    await load(true);
+
+    // Страница открывается сразу. Обновление данных идёт уже внутри неё.
+    void load(false);
   }
 
   window.FLO_TIPS={open,refresh:()=>load(true)};

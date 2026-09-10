@@ -1,12 +1,13 @@
-// FLO Academy release 1.0069
+// FLO Academy release 1.0071
 (()=>{
-  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0069';
+  const VERSION=window.__FLO_RELEASE_VERSION__||'1.0071';
   window.FLO_ACADEMY_VERSION=VERSION;
   window.FLO_TESTS_VERSION=VERSION;
   window.FLO_RESULTS_FILTER_VERSION=VERSION;
   window.FLO_LEARNING_UI_VERSION=VERSION;
   window.FLO_TIPS_VERSION=VERSION;
   window.FLO_INVENTORY_VERSION=VERSION;
+  window.FLO_EMPLOYEE_TEAM_VERSION=VERSION;
 
   let scheduled=false;
   const apply=()=>{
@@ -19,6 +20,7 @@
     window.FLO_LEARNING_UI_VERSION=VERSION;
     window.FLO_TIPS_VERSION=VERSION;
     window.FLO_INVENTORY_VERSION=VERSION;
+  window.FLO_EMPLOYEE_TEAM_VERSION=VERSION;
   };
   const schedule=()=>{
     if(scheduled)return;
