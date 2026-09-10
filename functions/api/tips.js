@@ -1,4 +1,4 @@
-// FLO Academy release 1.0072
+// FLO Academy release 1.0073
 const PROJECT_DEFAULT='flo-academy';
 const KEY_DEFAULT='AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A';
 const CONFIG='academyStaffConfig/main';
@@ -208,11 +208,10 @@ function participantInput(raw,team){
   const id=safeId(raw?.id),person=team.find(x=>x.id===id);
   if(!person||!isWaiter(person.position))fail(400,'Выберите официантов из вкладки «Команда».');
   const base=Number(raw.baseCoefficient);
-  if(![1,2,3].includes(base))fail(400,'Основной коэффициент должен быть 1,0, 2,0 или 3,0.');
-  const english=raw.english===true,wine=raw.wine===true;
-  if(base!==3&&(english||wine))fail(400,'Дополнительные +0,25 применяются только при основном коэффициенте 3,0.');
+  if(!Number.isFinite(base)||base<1||base>3.5||Math.round(base*4)!==base*4)fail(400,'Введите коэффициент от 1 до 3,5 с шагом 0,25.');
+  const english=false,wine=false;
   const shift=raw.shift==='half'?'half':'full',shiftMultiplier=shift==='half'?0.5:1;
-  const attestationCoefficient=base+(base===3&&english?0.25:0)+(base===3&&wine?0.25:0);
+  const attestationCoefficient=base;
   if(attestationCoefficient>3.5)fail(400,'Коэффициент не может быть выше 3,5.');
   const effectiveCoefficient=attestationCoefficient*shiftMultiplier;
   return {
