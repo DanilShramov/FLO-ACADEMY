@@ -98,8 +98,10 @@ export async function onRequest({request,env}){
    if(!c||!assigned(c,user.position))fail(403,'Чек-лист недоступен.');
    if(!Array.isArray(body.done)||body.done.length!==c.items.length||body.done.some(x=>typeof x!=='boolean'))fail(400,'Проверьте пункты чек-листа.');
    const day=localDay(),path=ownPath(user.uid,'checks/'+day+'_'+safeId(c.id)),prev=await store.get(path),data={id:c.id,day,done:body.done,items:c.items,name:c.name,updatedAt:Date.now()};
-   await store.commit([store.write(path,data,prev)]);return json(data);
+   if(prev&&JSON.stringify(prev.data.done)===JSON.stringify(data.done)&&JSON.stringify(prev.data.items)===JSON.stringify(data.items))return json(prev.data);
+   await store.commit([store.write(path,data,prev),store.write(ownPath(user.uid,'checkEvents/'+String(data.updatedAt)+'_'+crypto.randomUUID()),{...data,uid:user.uid,employeeName:user.name},null)]);return json(data);
  }
+ if(action==='check-history'){const uid=u.searchParams.get('uid')||user.uid;if(uid!==user.uid)reviewer(user);return json(await subPage(store,safeId(uid),'checkEvents',u.searchParams.get('cursor')))}
  if(action==='report'){
    reviewer(user);const page=await queryRows(store,'users',{size:10,cursor:u.searchParams.get('cursor')});
    const rows=await Promise.all(page.items.filter(x=>x.active!==false).map(async p=>{

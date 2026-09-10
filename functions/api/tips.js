@@ -1,4 +1,4 @@
-// FLO Academy release 1.0071
+// FLO Academy release 1.0072
 const PROJECT_DEFAULT='flo-academy';
 const KEY_DEFAULT='AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A';
 const CONFIG='academyStaffConfig/main';
@@ -239,9 +239,7 @@ async function allHistory(store){
 function ownHistory(rows,user){
   const userName=norm(user.name);
   return rows.flatMap(row=>{
-    const own=(row.distribution||[]).find(p=>p.uid===user.uid)||(
-      row.distribution||[]
-    ).find(p=>norm(p.name)===userName);
+    const own=(row.distribution||[]).find(p=>p.uid===user.uid);
     if(!own)return [];
     return [{
       id:row.id,workDate:row.workDate,createdAt:row.createdAt,savedAt:row.savedAt,

@@ -1,4 +1,4 @@
-// FLO Academy release 1.0071
+// FLO Academy release 1.0072
 const PROJECT_DEFAULT='flo-academy';
 const KEY_DEFAULT='AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A';
 const BREAKAGE='academyInventoryBreakage';
@@ -106,8 +106,9 @@ async function identity(request,env,store){
     allowed:management(position,profile.data.role)
   };
 }
+function requestId(v){if(typeof v!=='string'||! /^[a-f0-9-]{36}$/.test(v))fail(400,'Обновите страницу перед сохранением.');return v}
 function safeDate(value){
-  const v=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))fail(400,'Укажите дату.');return v;
+  const v=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))fail(400,'Укажите дату.');if(!Number.isFinite(Date.parse(v+'T12:00:00Z'))||new Date(v+'T12:00:00Z').toISOString().slice(0,10)!==v)fail(400,'Проверьте дату.');return v;
 }
 function safeCategory(value){
   const v=String(value||'');if(!['Посуда','Бокалы','Стекло'].includes(v))fail(400,'Выберите категорию.');return v;
@@ -162,7 +163,7 @@ export async function onRequest({request,env}){
       if(request.method!=='POST')fail(405,'Нужно сохранить данные.');
       const item=safeText(body.item,120);
       if(!item)fail(400,'Укажите наименование.');
-      const id='br_'+crypto.randomUUID().replace(/-/g,''),now=Date.now();
+      const id='br_'+user.uid+'_'+requestId(body.requestId),now=Date.now();const prior=await store.get(BREAKAGE+'/'+id);if(prior)return json({ok:true,id,...prior.data});
       const record={
         eventDate:safeDate(body.eventDate),category:safeCategory(body.category),
         item,quantity:safeQty(body.quantity),note:safeText(body.note,300),
@@ -184,7 +185,7 @@ export async function onRequest({request,env}){
         seen.add(key);
         return {category,item,quantity:safeQty(raw.quantity,true)};
       });
-      const id='inv_'+crypto.randomUUID().replace(/-/g,''),now=Date.now();
+      const id='inv_'+user.uid+'_'+requestId(body.requestId),now=Date.now();const prior=await store.get(COUNTS+'/'+id);if(prior)return json({ok:true,id,...prior.data});
       const record={
         inventoryDate:safeDate(body.inventoryDate),lines,note:safeText(body.note,500),
         cycleWeeks:6,createdAt:now,createdByUid:user.uid,createdByName:user.name,createdByPosition:user.position

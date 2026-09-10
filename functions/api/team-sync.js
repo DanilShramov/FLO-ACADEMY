@@ -1,4 +1,4 @@
-// FLO Academy release 1.0071
+// FLO Academy release 1.0072
 const PROJECT_DEFAULT='flo-academy';
 const KEY_DEFAULT='AIzaSyDm4TBEVuiv-d1y64WvimmVeWE9G-xb9-A';
 const CONFIG='academyStaffConfig/main';
