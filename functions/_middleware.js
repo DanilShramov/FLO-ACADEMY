@@ -1,5 +1,5 @@
-// FLO Academy release 1.0064
-const RELEASE_VERSION='1.0064';
+// FLO Academy release 1.0066
+const RELEASE_VERSION='1.0066';
 
 export async function onRequest(context){
   const response=await context.next();
@@ -18,16 +18,55 @@ export async function onRequest(context){
 
   let text=await response.text();
 
-  // Старый APP_VERSION в index.html больше не может вернуть старый номер.
+  // Убираем старые уже встроенные блоки версии/патчей из index.html,
+  // чтобы JS не загружался дважды.
+  text=text.replace(
+    /<script>\s*window\.__FLO_RELEASE_VERSION__\s*=\s*["'][^"']+["'];?\s*<\/script>\s*/g,
+    ''
+  );
+  text=text.replace(
+    /<script\s+src=["']\/(?:test-upgrade|results-filter|release-version|learning-ui)\.js\?v=[^"']+["']><\/script>\s*/g,
+    ''
+  );
+
+  // Одна версия для index и всех внутренних ресурсов.
   text=text.replace(
     /const\s+APP_VERSION\s*=\s*["'][^"']+["']\s*;/,
     `const APP_VERSION="${RELEASE_VERSION}";`
+  );
+  text=text.replace(
+    /(staff-learning\.css\?v=)[^"'&<>\s]+/g,
+    `$1${RELEASE_VERSION}`
+  );
+  text=text.replace(
+    /(staff-learning\.js\?v=)[^"'&<>\s]+/g,
+    `$1${RELEASE_VERSION}`
+  );
+
+  // Старт пользовательского обучения запускаем раньше:
+  // он больше не ждёт завершения второстепенной отрисовки материалов.
+  if(!text.includes('window.__floStaffStartPromise=staff.start()')){
+    text=text.replace(
+      'show("employeeView");showEmployeePage("home");',
+      'show("employeeView");showEmployeePage("home");window.__floStaffStartPromise=staff.start();'
+    );
+
+    text=text.replace(
+      'await staff.start();staffReady=true;',
+      'await (window.__floStaffStartPromise||staff.start());window.__floStaffStartPromise=null;staffReady=true;'
+    );
+  }
+
+  text=text.replace(
+    'const library=await getEmployeeLibrary(true);\n      await loadEmployeeSections();\n      await loadEmployeeMaterialsUpdatedAt(library.items);',
+    'const library=await getEmployeeLibrary(true);\n      await Promise.all([loadEmployeeSections(),loadEmployeeMaterialsUpdatedAt(library.items)]);'
   );
 
   const scripts=`<script>window.__FLO_RELEASE_VERSION__="${RELEASE_VERSION}";</script>
 <script src="/test-upgrade.js?v=${RELEASE_VERSION}"></script>
 <script src="/results-filter.js?v=${RELEASE_VERSION}"></script>
 <script src="/release-version.js?v=${RELEASE_VERSION}"></script>
+<script src="/learning-ui.js?v=${RELEASE_VERSION}"></script>
 <script type="module">`;
 
   const injected=text.replace('<script type="module">',scripts);
