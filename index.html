@@ -54,8 +54,8 @@ button,input,select{font-family:inherit}button{min-height:44px;touch-action:mani
 @media(max-width:600px){.testStats{gap:7px}.testStats>div{padding:14px 10px}.testStats b{font-size:27px}.testStats span{font-size:12px}.testLandingActions{grid-template-columns:1fr}.testCatalog{grid-template-columns:1fr}.testTabs{gap:6px}.testTabs button{font-size:13px;padding:10px}.testNav button{font-size:12px;padding:10px 4px}.testOverlay{padding:8px}.testWindow{padding:20px 16px;border-radius:18px;min-height:calc(100dvh - 16px);padding-bottom:calc(20px + env(safe-area-inset-bottom))}.runnerTop{align-items:flex-start;gap:10px}.runnerTop h2{font-size:21px}.runnerClock>span:first-child{font-size:24px}.questionSteps{grid-template-columns:repeat(5,minmax(0,1fr));margin:20px 0;gap:7px}.questionHeading h3{font-size:23px}.testOption{padding:14px 12px}.runnerBottom .primary{flex-basis:100%;order:3}.historyRow{align-items:flex-start;padding:16px;gap:12px}.resultPill{font-size:13px}.historyRow b{font-size:14px}.testBrand{font-size:26px;letter-spacing:4px}}
 
 </style>
-<link rel="stylesheet" href="/staff-learning.css?v=1.0076">
-<link rel="stylesheet" href="/polish.css?v=1.0076">
+<link rel="stylesheet" href="/staff-learning.css?v=1.0077">
+<link rel="stylesheet" href="/polish.css?v=1.0077">
 </head>
 <body>
 <div class="wrap">
@@ -79,7 +79,7 @@ button,input,select{font-family:inherit}button{min-height:44px;touch-action:mani
     <div class="searchBox"><input id="adminGlobalSearch" type="search" placeholder="Поиск по папкам и материалам"></div>
     <div id="adminSearchResults" class="list hidden"></div>
     <div id="floAdminHome" class="homeGrid"></div><div class="floAdminTools">
-      <button id="openEmployeesBtn" class="tile tileButton"><b id="countEmployees">0</b><span>Сотрудники →</span></button>
+      <button id="openEmployeesBtn" class="tile tileButton hidden" aria-hidden="true" tabindex="-1"><b id="countEmployees">0</b><span>Сотрудники →</span></button>
       <button id="openMaterialsBtn" class="tile tileButton"><b id="countMaterials">0</b><span>Материалы →</span></button>
       <button id="openTestsBtn" class="tile tileButton hidden"><b>Тесты</b><span>Проверка знаний и результаты →</span></button>
     </div>
@@ -100,12 +100,12 @@ button,input,select{font-family:inherit}button{min-height:44px;touch-action:mani
 
   <section id="employeesView" class="card hidden">
     <div class="top">
-      <div><div class="brand" style="text-align:left"><div class="logo" style="font-size:31px;margin:0;letter-spacing:6px">FLO <span style="font-size:1em;letter-spacing:6px">ACADEMY</span></div></div><h1 style="margin-top:18px">Сотрудники</h1><div class="sub">Управление сотрудниками</div></div>
+      <div><div class="brand" style="text-align:left"><div class="logo" style="font-size:31px;margin:0;letter-spacing:6px">FLO <span style="font-size:1em;letter-spacing:6px">ACADEMY</span></div></div><h1 style="margin-top:18px">Команда</h1><div class="sub">Состав команды и управление сотрудниками</div></div>
       <div class="actions"><button id="backToAdminFromEmployeesBtn" class="secondary">← Назад</button><button id="employeesLogoutBtn" class="secondary">Выйти</button></div>
     </div>
     <div class="rule"></div>
     <div class="top">
-      <div><h2>Список сотрудников</h2><div class="sub" style="margin-bottom:0">Добавление и удаление сотрудников</div></div>
+      <div><h2>Сотрудники</h2><div class="sub" style="margin-bottom:0">Добавление, редактирование и удаление</div></div>
       <button id="addEmployeeFromListBtn" class="secondary">+ Добавить сотрудника</button>
     </div>
     <div id="employeeMsg"></div>
@@ -231,14 +231,14 @@ button,input,select{font-family:inherit}button{min-height:44px;touch-action:mani
  </div>
 </div>
 
-<script>window.__FLO_RELEASE_VERSION__="1.0076";</script>
-<script src="/learning-ui.js?v=1.0076"></script>
-<script src="/release-version.js?v=1.0076"></script>
-<script src="/test-upgrade.js?v=1.0076"></script>
-<script src="/results-filter.js?v=1.0076"></script>
-<script src="/employee-team.js?v=1.0076"></script>
+<script>window.__FLO_RELEASE_VERSION__="1.0077";</script>
+<script src="/learning-ui.js?v=1.0077"></script>
+<script src="/release-version.js?v=1.0077"></script>
+<script src="/test-upgrade.js?v=1.0077"></script>
+<script src="/results-filter.js?v=1.0077"></script>
+<script src="/employee-team.js?v=1.0077"></script>
 <script type="module">
-import {installStaff} from "./staff-learning.js?v=1.0076";
+import {installStaff} from "./staff-learning.js?v=1.0077";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc as firestoreSetDoc, collection, getDocs, deleteDoc as firestoreDeleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
@@ -267,7 +267,7 @@ let accessEditingFolderId=null;
 let employeeSectionsCache=null;
 let employeeMaterialsCache=null;
 // Release number changes only when a new build is issued, never on page reload.
-const APP_VERSION="1.0076";
+const APP_VERSION="1.0077";
 document.querySelectorAll("[data-app-version]").forEach(el=>el.textContent="Версия "+APP_VERSION);
 const libraryCache=new Map();
 let cacheGeneration=0;
@@ -1147,7 +1147,7 @@ const staff=installStaff({
  home:()=>{show(testUserIsAdmin?"adminView":"employeeView");if(!testUserIsAdmin)showEmployeePage("home")},
  materials:()=>showEmployeePage("materials"),openTests,tests:testApi,attempt:openTestAttempt,logout:()=>signOut(auth)
 });
-window.FLO_APP={home:()=>{show(testUserIsAdmin?"adminView":"employeeView");showEmployeePage("home")},team:()=>{if(testUserIsAdmin)$("employeeHello").textContent="Администратор · "+(auth.currentUser?.email||"");show("employeeView");showEmployeePage("team")},materials:()=>{if(testUserIsAdmin){$("openMaterialsBtn").click()}else{show("employeeView");showEmployeePage("materials")}},tests:openTests,staff:action=>staff.open(action),logout:()=>signOut(auth)};
+window.FLO_APP={home:()=>{show(testUserIsAdmin?"adminView":"employeeView");showEmployeePage("home")},team:()=>{if(testUserIsAdmin){show("employeesView");void loadEmployees()}else{show("employeeView");showEmployeePage("team")}},materials:()=>{if(testUserIsAdmin){$("openMaterialsBtn").click()}else{show("employeeView");showEmployeePage("materials")}},tests:openTests,staff:action=>staff.open(action),logout:()=>signOut(auth)};
 onAuthStateChanged(auth,async user=>{
  staffReady=false;staff.reset();window.FLO_NAV?.reset();
   resetTests();testUserIsAdmin=false;
